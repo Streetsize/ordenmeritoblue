@@ -128,7 +128,7 @@ document.getElementById('rankingForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     // Reemplazá esto por la URL que te generó Apps Script al publicar
-    const API_URL = 'PEGAR_TU_URL_DE_APPS_SCRIPT_AQUI'; 
+    const API_URL = 'https://script.google.com/macros/s/AKfycbw5QDHg9Rl9tAb-oK43_kDgh-QuvIF8jUnDPaUR-8OcccE5ydiESzHY4Mw8kbr7AVRT/exec'; 
 
     // Obtener valores
     const dni = document.getElementById('dni').value;
