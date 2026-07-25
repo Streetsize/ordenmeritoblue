@@ -1,15 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// 1. TU CONFIGURACIÓN DE FIREBASE (¡Pégala aquí!)
+// 1. TU CONFIGURACIÓN DE FIREBASE AQUÍ
 const firebaseConfig = {
-  apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
-  authDomain: "ranking-residencias.firebaseapp.com",
-  databaseURL: "https://ranking-residencias-default-rtdb.firebaseio.com",
-  projectId: "ranking-residencias",
-  storageBucket: "ranking-residencias.firebasestorage.app",
-  messagingSenderId: "455818361669",
-  appId: "1:455818361669:web:c16e96cddd06b280ab9c2c"
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
+  projectId: "TU_PROYECTO",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -102,46 +102,41 @@ const datosResidencias = {
     "UROLOGÍA (Primer nivel)": ["Hospital Central", "Hospital Español", "Uroclínica"]
 };
 
-// Variables Globales de Estado
+// Estado Global
 let registrosBD = [];
 let llavesBD = [];
 let indiceUsuarioActual = -1;
 let miDNI = "";
 
-// Elementos del DOM
+// Elementos DOM
 const paso1 = document.getElementById('paso1');
 const paso2 = document.getElementById('paso2');
 const paso3 = document.getElementById('paso3');
 const loading = document.getElementById('loading');
 const errorBox = document.getElementById('errorBox');
+const resultadoFinal = document.getElementById('resultadoFinal');
+const tituloTabla = document.getElementById('tituloTabla');
 
 const especialidadSelect = document.getElementById('especialidad');
 const hospitalSelect = document.getElementById('hospital');
+const especialidadLibreSelect = document.getElementById('especialidadLibre');
 
-// Inicializar Selectores de Especialidad
 window.onload = function() {
     const especialidades = Object.keys(datosResidencias).sort();
     especialidades.forEach(esp => {
-        const option = document.createElement('option');
-        option.value = esp;
-        option.textContent = esp;
-        especialidadSelect.appendChild(option);
+        especialidadSelect.appendChild(new Option(esp, esp));
+        especialidadLibreSelect.appendChild(new Option(esp, esp));
     });
 };
 
-// Lógica de Hospitales Dependientes
 especialidadSelect.addEventListener('change', function() {
     const espSelec = this.value;
     hospitalSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
     
     if (espSelec) {
         hospitalSelect.disabled = false;
-        const hospitales = datosResidencias[espSelec].sort();
-        hospitales.forEach(hosp => {
-            const option = document.createElement('option');
-            option.value = hosp;
-            option.textContent = hosp;
-            hospitalSelect.appendChild(option);
+        datosResidencias[espSelec].sort().forEach(hosp => {
+            hospitalSelect.appendChild(new Option(hosp, hosp));
         });
     } else {
         hospitalSelect.disabled = true;
@@ -159,7 +154,84 @@ function mostrarError(mensaje) {
     errorBox.innerHTML = `<strong>Error:</strong> ${mensaje}`;
 }
 
-// --- PASO 1: BÚSQUEDA DE DNI ---
+// FUNCIONES DE CÁLCULO Y DIBUJO DE TABLA
+function calcularPuntajeBase(registro) {
+    // Si ya actualizó datos, usamos su nota guardada. Si no, calculamos el 90% del examen.
+    if (registro.NOTA_FINAL && !isNaN(registro.NOTA_FINAL)) {
+        return parseFloat(registro.NOTA_FINAL);
+    }
+    return parseFloat(registro.NOTA) * 0.90;
+}
+
+function generarTabla(especialidadABuscar, dniSeleccionado = null) {
+    let competidores = registrosBD.filter(p => p && p.ESPECIALIDAD === especialidadABuscar);
+    
+    // Ordenar descendente usando la nota final real o provisoria
+    competidores.sort((a, b) => calcularPuntajeBase(b) - calcularPuntajeBase(a));
+
+    const tbody = document.querySelector('#tablaCompetidores tbody');
+    tbody.innerHTML = '';
+    let miPosicion = 0;
+
+    competidores.forEach((c, index) => {
+        const tr = document.createElement('tr');
+        
+        if (dniSeleccionado && c.DNI.toString() === dniSeleccionado) {
+            tr.className = 'fila-usuario';
+            miPosicion = index + 1;
+        }
+
+        let notaMapeada = calcularPuntajeBase(c).toFixed(2);
+        let iconoCarga = c.NOTA_FINAL ? '✅' : '⏳';
+        let valPromedio = c.PROMEDIO ? c.PROMEDIO : '-';
+        let valHospital = c.HTAL ? c.HTAL : '-';
+
+        tr.innerHTML = `
+            <td><strong>${index + 1}</strong></td>
+            <td>${c.DNI}</td>
+            <td>${c.NOTA}</td>
+            <td>${valPromedio}</td>
+            <td><strong>${notaMapeada}</strong> ${iconoCarga}</td>
+            <td>${valHospital}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    return { total: competidores.length, miPosicion: miPosicion };
+}
+
+// -----------------------------------------------------
+// CAMINO 1: SNOOPEAR EL RANKING (CHUSMEAR)
+// -----------------------------------------------------
+document.getElementById('btnVerLibre').addEventListener('click', async () => {
+    const espElegida = especialidadLibreSelect.value;
+    if (!espElegida) return mostrarError("Elegí una especialidad para ver.");
+
+    mostrarCarga(true);
+    
+    try {
+        const snapshot = await get(ref(db, '/'));
+        if (!snapshot.exists()) throw new Error("La base de datos está vacía.");
+        
+        const data = snapshot.val();
+        registrosBD = Array.isArray(data) ? data : Object.values(data);
+        
+        generarTabla(espElegida, null);
+        
+        resultadoFinal.style.display = 'none'; // Ocultamos el mensaje de éxito personal
+        tituloTabla.innerText = `Ranking General: ${espElegida}`;
+        
+        mostrarCarga(false);
+        paso1.style.display = 'none';
+        paso3.style.display = 'block';
+    } catch (error) {
+        mostrarError(error.message);
+    }
+});
+
+// -----------------------------------------------------
+// CAMINO 2: ACTUALIZAR DATOS DE USUARIO
+// -----------------------------------------------------
 document.getElementById('btnSiguiente').addEventListener('click', async () => {
     const dniInput = document.getElementById('dniBuscador').value.trim();
     if (!dniInput) return mostrarError("Debes ingresar un DNI.");
@@ -177,7 +249,6 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
         
         indiceUsuarioActual = -1;
         
-        // Buscar usuario
         for (let i = 0; i < registrosBD.length; i++) {
             if (registrosBD[i] && registrosBD[i].DNI && registrosBD[i].DNI.toString() === dniInput) {
                 indiceUsuarioActual = llavesBD[i];
@@ -192,24 +263,17 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
             return;
         }
 
-        // Usuario Encontrado: Cargar sus datos en el Paso 2
         const miRegistro = registrosBD[llavesBD.indexOf(indiceUsuarioActual)];
         
-        document.getElementById('notaExamen').value = miRegistro.NOTA; // Solo lectura
-        
-        if (miRegistro.PROMEDIO) {
-            document.getElementById('promedio').value = miRegistro.PROMEDIO;
-        }
+        document.getElementById('notaExamen').value = miRegistro.NOTA;
+        if (miRegistro.PROMEDIO) document.getElementById('promedio').value = miRegistro.PROMEDIO;
         
         if (miRegistro.ESPECIALIDAD) {
             especialidadSelect.value = miRegistro.ESPECIALIDAD;
-            especialidadSelect.dispatchEvent(new Event('change')); // Activar hospitales
-            if (miRegistro.HTAL) {
-                hospitalSelect.value = miRegistro.HTAL;
-            }
+            especialidadSelect.dispatchEvent(new Event('change'));
+            if (miRegistro.HTAL) hospitalSelect.value = miRegistro.HTAL;
         }
 
-        // Transición de pantalla
         mostrarCarga(false);
         paso1.style.display = 'none';
         paso2.style.display = 'block';
@@ -220,7 +284,6 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
     }
 });
 
-// Botón Atrás
 document.getElementById('btnVolver').addEventListener('click', () => {
     paso2.style.display = 'none';
     paso1.style.display = 'block';
@@ -228,9 +291,8 @@ document.getElementById('btnVolver').addEventListener('click', () => {
     errorBox.style.display = 'none';
 });
 
-// --- PASO 2: GUARDAR Y MOSTRAR RANKING ---
+// PASO 2.5: GUARDAR
 document.getElementById('btnGuardar').addEventListener('click', async () => {
-    // Obtener valores
     const promedioTxt = document.getElementById('promedio').value;
     if (!promedioTxt) return mostrarError("Debes ingresar tu promedio.");
     
@@ -243,7 +305,6 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
 
     mostrarCarga(true);
     document.getElementById('btnGuardar').disabled = true;
-    document.getElementById('btnVolver').disabled = true;
 
     try {
         const miRegistro = registrosBD[llavesBD.indexOf(indiceUsuarioActual)];
@@ -255,7 +316,7 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
         const puntosMendoza = estudioMendoza ? 5 : 0;
         const notaFinal = (puntosExamen + puntosPromedio + puntosMendoza).toFixed(2);
 
-        // Guardar en Firebase
+        // Actualizar Firebase
         const updates = {};
         updates[`/${indiceUsuarioActual}/PROMEDIO`] = promedio;
         updates[`/${indiceUsuarioActual}/ESPECIALIDAD`] = especialidad;
@@ -264,50 +325,23 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
 
         await update(ref(db), updates);
 
-        // Actualizar base de datos local para la tabla
+        // Actualizar array en memoria para dibujar tabla
         miRegistro.PROMEDIO = promedio;
         miRegistro.ESPECIALIDAD = especialidad;
         miRegistro.HTAL = hospital;
         miRegistro.NOTA_FINAL = parseFloat(notaFinal);
 
-        // Generar Tabla de Competidores
-        let competidores = registrosBD.filter(p => p && p.ESPECIALIDAD === especialidad);
-        // Ordenar por Nota Final descendente
-        competidores.sort((a, b) => (b.NOTA_FINAL || 0) - (a.NOTA_FINAL || 0));
+        // Dibujar Tabla y sacar cálculos
+        let resumen = generarTabla(especialidad, miDNI);
 
-        let miPosicion = 0;
-        const tbody = document.querySelector('#tablaCompetidores tbody');
-        tbody.innerHTML = '';
-
-        competidores.forEach((c, index) => {
-            const tr = document.createElement('tr');
-            
-            // Si es el usuario actual, lo resaltamos
-            if (c.DNI.toString() === miDNI) {
-                tr.className = 'fila-usuario';
-                miPosicion = index + 1;
-            }
-
-            // Ocultar parcialmente el DNI por privacidad (ej. 38.***.456), o mostrarlo entero.
-            // Aquí lo mostramos tal cual viene, asumiendo que es un padrón público.
-            tr.innerHTML = `
-                <td><strong>${index + 1}</strong></td>
-                <td>${c.DNI}</td>
-                <td>${c.NOTA || '-'}</td>
-                <td>${c.PROMEDIO || '-'}</td>
-                <td><strong>${c.NOTA_FINAL ? c.NOTA_FINAL.toFixed(2) : '-'}</strong></td>
-                <td>${c.HTAL || 'Sin definir'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        // Mostrar Resultados
-        document.getElementById('resultadoFinal').innerHTML = `
+        resultadoFinal.style.display = 'block';
+        resultadoFinal.innerHTML = `
             <h3>¡Datos actualizados con éxito!</h3>
-            <p style="font-size: 1.1rem; margin: 10px 0;">Tu posición actual es <strong>${miPosicion} de ${competidores.length}</strong> postulantes en ${especialidad}.</p>
+            <p style="font-size: 1.1rem; margin: 10px 0;">Tu posición actual es <strong>${resumen.miPosicion} de ${resumen.total}</strong> postulantes en ${especialidad}.</p>
             <p>Nota Examen: ${notaExamen} | Promedio: ${promedio} ${estudioMendoza ? '| (+5 pts Mza)' : ''}</p>
             <p style="font-size: 1.2rem; color: #155724;"><strong>Nota Final Definitiva: ${notaFinal}</strong></p>
         `;
+        tituloTabla.innerText = "Comparativa en tu Especialidad";
 
         mostrarCarga(false);
         paso2.style.display = 'none';
@@ -316,6 +350,5 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
     } catch (error) {
         mostrarError("Error guardando datos: " + error.message);
         document.getElementById('btnGuardar').disabled = false;
-        document.getElementById('btnVolver').disabled = false;
     }
 });
