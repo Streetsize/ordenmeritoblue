@@ -1,4 +1,23 @@
-// Base de datos de Especialidades y Hospitales (Extraída de tu lista oficial)
+// Importamos Firebase directamente desde sus servidores
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// 1. PEGA TU CONFIGURACIÓN DE FIREBASE AQUÍ
+const firebaseConfig = {
+apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
+  authDomain: "ranking-residencias.firebaseapp.com",
+  databaseURL: "https://ranking-residencias-default-rtdb.firebaseio.com",
+  projectId: "ranking-residencias",
+  storageBucket: "ranking-residencias.firebasestorage.app",
+  messagingSenderId: "455818361669",
+  appId: "1:455818361669:web:c16e96cddd06b280ab9c2c"
+};
+
+// Inicializamos la aplicación y la base de datos
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Diccionario de Especialidades y Hospitales
 const datosResidencias = {
     "ANATOMÍA PATOLÓGICA (Primer nivel)": ["Hospital Central", "Hospital Luis Lagomaggiore"],
     "ANESTESIOLOGÍA (Primer nivel)": ["Hospital Central", "Hospital Luis Lagomaggiore", "Hospital Teodoro Schestakow"],
@@ -85,11 +104,11 @@ const datosResidencias = {
     "UROLOGÍA (Primer nivel)": ["Hospital Central", "Hospital Español", "Uroclínica"]
 };
 
-// Selectores del DOM
+// Referencias DOM
 const especialidadSelect = document.getElementById('especialidad');
 const hospitalSelect = document.getElementById('hospital');
 
-// 1. Inicializar Especialidades
+// Inicializar menús al cargar la página
 window.onload = function() {
     const especialidades = Object.keys(datosResidencias).sort();
     especialidades.forEach(esp => {
@@ -100,17 +119,14 @@ window.onload = function() {
     });
 };
 
-// 2. Lógica de Hospitales Dependientes
+// Selectores dinámicos
 especialidadSelect.addEventListener('change', function() {
-    const especialidadSeleccionada = this.value;
-    
-    // Resetear opciones
+    const espSelec = this.value;
     hospitalSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
     
-    if (especialidadSeleccionada) {
+    if (espSelec) {
         hospitalSelect.disabled = false;
-        const hospitales = datosResidencias[especialidadSeleccionada].sort();
-        
+        const hospitales = datosResidencias[espSelec].sort();
         hospitales.forEach(hosp => {
             const option = document.createElement('option');
             option.value = hosp;
@@ -123,16 +139,13 @@ especialidadSelect.addEventListener('change', function() {
     }
 });
 
-// 3. Envío de Datos a Google Sheets (Apps Script)
+// Lógica de Envío a Firebase
 document.getElementById('rankingForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Aquí está la URL correcta que proporcionaste
-    const API_URL = 'https://script.google.com/macros/s/AKfycbw5QDHg9Rl9tAb-oK43_kDgh-QuvIF8jUnDPaUR-8OcccE5ydiESzHY4Mw8kbr7AVRT/exec'; 
-
-    // Obtener valores
-    const dni = document.getElementById('dni').value;
-    const promedio = document.getElementById('promedio').value;
+    const dni = document.getElementById('dni').value.trim();
+    // Reemplaza coma por punto y extrae el número
+    const promedio = parseFloat(document.getElementById('promedio').value.replace(',', '.'));
     const especialidad = especialidadSelect.value;
     const hospital = hospitalSelect.value;
     const estudioMendoza = document.getElementById('estudioMendoza').checked;
@@ -140,50 +153,92 @@ document.getElementById('rankingForm').addEventListener('submit', async (e) => {
     const resultadoDiv = document.getElementById('resultado');
     const submitBtn = document.querySelector('button[type="submit"]');
     
-    // Estado de carga
     resultadoDiv.style.display = 'block';
     resultadoDiv.className = 'loader';
-    resultadoDiv.innerHTML = 'Procesando datos y calculando ranking...';
+    resultadoDiv.innerHTML = 'Conectando con la base de datos...';
     submitBtn.disabled = true;
 
-    // Armar el paquete de datos
-    const payload = {
-        dni: dni,
-        promedio: promedio,
-        especialidad: especialidad,
-        hospital: hospital,
-        estudioMendoza: estudioMendoza
-    };
-
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8',
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-
-        // Mostrar resultados
-        if (result.error) {
-            resultadoDiv.className = 'error';
-            resultadoDiv.innerHTML = `<strong>Error:</strong> ${result.error}`;
-        } else {
-            resultadoDiv.className = 'success';
-            resultadoDiv.innerHTML = `
-                <h3>¡Datos guardados con éxito!</h3>
-                <p style="font-size: 1.2rem; margin: 10px 0;">Nota Final Definitiva: <strong>${result.notaFinal}</strong></p>
-                <hr style="border-top: 1px solid #c3e6cb; margin: 15px 0;">
-                <p style="font-size: 1.1rem;">Tu Ranking Actual en ${especialidad}:<br>
-                Posición <strong style="font-size: 1.5rem;">${result.ranking}</strong> de ${result.totalCompetidores} postulantes.</p>
-            `;
+        // 1. Obtener todos los datos desde Firebase
+        const dbRef = ref(db, '/');
+        const snapshot = await get(dbRef);
+        
+        if (!snapshot.exists()) {
+            throw new Error("La base de datos está vacía. Avisa al administrador.");
         }
+
+        let data = snapshot.val();
+        
+        // Estandarizar la lectura dependiendo si Firebase lo guardó como array o como objeto
+        let records = Array.isArray(data) ? data : Object.values(data);
+        let keys = Array.isArray(data) ? data.map((_, i) => i) : Object.keys(data);
+        
+        let targetIndex = -1;
+        let notaExamen = 0;
+
+        // 2. Buscar el DNI
+        for (let i = 0; i < records.length; i++) {
+            if (records[i] && records[i].DNI && records[i].DNI.toString() === dni) {
+                targetIndex = keys[i];
+                // Asegurarse de leer la nota numérica
+                notaExamen = parseFloat(records[i].NOTA);
+                break;
+            }
+        }
+
+        if (targetIndex === -1) {
+            resultadoDiv.className = 'error';
+            resultadoDiv.innerHTML = '<strong>Error:</strong> DNI no encontrado en el padrón de examen.';
+            submitBtn.disabled = false;
+            return;
+        }
+
+        // 3. Matemáticas de la Nota
+        const puntosExamen = notaExamen * 0.90;
+        const puntosPromedio = promedio * 0.5;
+        const puntosMendoza = estudioMendoza ? 5 : 0;
+        const notaFinal = (puntosExamen + puntosPromedio + puntosMendoza).toFixed(2);
+
+        // 4. Actualizar Firebase con los datos de este postulante
+        const updates = {};
+        updates[`/${targetIndex}/PROMEDIO`] = promedio;
+        updates[`/${targetIndex}/ESPECIALIDAD`] = especialidad;
+        updates[`/${targetIndex}/HTAL`] = hospital;
+        updates[`/${targetIndex}/NOTA_FINAL`] = parseFloat(notaFinal);
+
+        await update(ref(db), updates);
+
+        // 5. Calcular el Ranking localmente
+        // Actualizamos nuestro registro en memoria para hacer el cálculo al instante
+        records[keys.indexOf(targetIndex)].ESPECIALIDAD = especialidad;
+        records[keys.indexOf(targetIndex)].NOTA_FINAL = parseFloat(notaFinal);
+
+        // Filtramos a los que tienen la misma especialidad elegida y los ordenamos por nota
+        let competidores = records.filter(p => p && p.ESPECIALIDAD === especialidad);
+        competidores.sort((a, b) => b.NOTA_FINAL - a.NOTA_FINAL);
+
+        let ranking = -1;
+        for (let i = 0; i < competidores.length; i++) {
+            if (competidores[i].DNI.toString() === dni) {
+                ranking = i + 1;
+                break;
+            }
+        }
+
+        // 6. Mostrar el éxito en la pantalla
+        resultadoDiv.className = 'success';
+        resultadoDiv.innerHTML = `
+            <h3>¡Datos guardados con éxito!</h3>
+            <p style="font-size: 1.2rem; margin: 10px 0;">Nota Final Definitiva: <strong>${notaFinal}</strong></p>
+            <hr style="border-top: 1px solid #c3e6cb; margin: 15px 0;">
+            <p style="font-size: 1.1rem;">Tu Ranking Actual en ${especialidad}:<br>
+            Posición <strong style="font-size: 1.5rem;">${ranking}</strong> de ${competidores.length} postulantes.</p>
+        `;
+
     } catch (error) {
         resultadoDiv.className = 'error';
-        resultadoDiv.innerHTML = '<strong>Error de conexión.</strong> No se pudo contactar con la base de datos. Verifica la URL de Apps Script.';
-        console.error('Error:', error);
+        resultadoDiv.innerHTML = `<strong>Error de conexión:</strong> ${error.message}`;
+        console.error('Error completo:', error);
     } finally {
         submitBtn.disabled = false;
     }
