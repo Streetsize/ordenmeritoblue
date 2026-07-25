@@ -127,7 +127,7 @@ especialidadSelect.addEventListener('change', function() {
 document.getElementById('rankingForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Reemplazá esto por la URL que te generó Apps Script al publicar
+    // Aquí está la URL correcta que proporcionaste
     const API_URL = 'https://script.google.com/macros/s/AKfycbw5QDHg9Rl9tAb-oK43_kDgh-QuvIF8jUnDPaUR-8OcccE5ydiESzHY4Mw8kbr7AVRT/exec'; 
 
     // Obtener valores
