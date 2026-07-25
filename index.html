@@ -7,102 +7,77 @@
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            max-width: 600px; 
+            max-width: 700px; 
             margin: 2rem auto; 
             padding: 1rem; 
-            background-color: #f9f9f9; 
+            background-color: #f0f2f5; 
             color: #333;
         }
         .container { 
             background: white; 
             padding: 2rem; 
             border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
         }
-        h2 {
-            text-align: center;
-            color: #0056b3;
-            margin-bottom: 1.5rem;
+        h2 { text-align: center; color: #0056b3; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input[type="text"], input[type="number"], select { 
+            width: 100%; padding: 0.75rem; border: 1px solid #ccc; 
+            border-radius: 4px; box-sizing: border-box; font-size: 1rem;
         }
-        .form-group { 
-            margin-bottom: 1.5rem; 
-        }
-        label { 
-            display: block; 
-            margin-bottom: 0.5rem; 
-            font-weight: bold; 
-        }
-        input[type="text"], select { 
-            width: 100%; 
-            padding: 0.75rem; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            box-sizing: border-box; 
-            font-size: 1rem;
-        }
+        input[readonly] { background-color: #e9ecef; cursor: not-allowed; color: #495057; font-weight: bold; }
+        
         .checkbox-group { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.5rem; 
-            background: #f1f8ff;
-            padding: 1rem;
-            border-radius: 4px;
-            border: 1px solid #cce5ff;
+            display: flex; align-items: center; gap: 0.5rem; 
+            background: #f1f8ff; padding: 1rem; border-radius: 4px; border: 1px solid #cce5ff;
         }
-        .checkbox-group input { 
-            width: auto; 
-            margin: 0; 
-            transform: scale(1.2);
-        }
+        .checkbox-group input { width: auto; margin: 0; transform: scale(1.2); }
+        
         button { 
-            width: 100%; 
-            padding: 1rem; 
-            background: #0056b3; 
-            color: white; 
-            border: none; 
-            border-radius: 4px; 
-            font-size: 1.1rem; 
-            font-weight: bold;
-            cursor: pointer; 
-            transition: background 0.3s; 
+            width: 100%; padding: 1rem; background: #0056b3; color: white; 
+            border: none; border-radius: 4px; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; transition: background 0.3s; 
         }
-        button:hover { 
-            background: #004494; 
-        }
-        button:disabled { 
-            background: #ccc; 
-            cursor: not-allowed; 
-        }
-        #resultado { 
-            margin-top: 1.5rem; 
-            padding: 1.5rem; 
-            border-radius: 4px; 
-            display: none; 
-            text-align: center;
-        }
-        .success { 
-            background-color: #d4edda; 
-            color: #155724; 
-            border: 1px solid #c3e6cb; 
-        }
-        .error { 
-            background-color: #f8d7da; 
-            color: #721c24; 
-            border: 1px solid #f5c6cb; 
-        }
-        .loader {
-            color: #0056b3;
-            font-weight: bold;
-        }
+        button:hover { background: #004494; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* Sistema de Pasos */
+        #paso2, #paso3 { display: none; }
+        .loader { color: #0056b3; font-weight: bold; text-align: center; margin-top: 1rem; display: none; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 4px; margin-top: 1rem; display: none; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 1rem; border-radius: 4px; text-align: center; }
+        
+        /* Tabla de Competidores */
+        .table-responsive { overflow-x: auto; margin-top: 1.5rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 0.75rem; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #0056b3; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        /* Fila resaltada para el usuario actual */
+        .fila-usuario { background-color: #c3e6cb !important; font-weight: bold; border-left: 5px solid #28a745; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Verificador de Ranking</h2>
-        <form id="rankingForm">
+        <h2>Ranking Residencias 2026</h2>
+        
+        <!-- PASO 1: Ingreso de DNI -->
+        <div id="paso1">
+            <p style="text-align: center; color: #555; margin-bottom: 1.5rem;">Ingresá tu DNI para verificar tu nota en el padrón.</p>
             <div class="form-group">
-                <label for="dni">DNI (sin puntos):</label>
-                <input type="text" id="dni" required placeholder="Ej: 38123456" pattern="[0-9]+" title="Solo números, sin puntos">
+                <label for="dniBuscador">DNI (sin puntos):</label>
+                <input type="text" id="dniBuscador" required placeholder="Ej: 38123456" pattern="[0-9]+">
+            </div>
+            <button id="btnSiguiente">Siguiente</button>
+        </div>
+
+        <!-- PASO 2: Confirmación de Datos -->
+        <div id="paso2">
+            <div class="form-group">
+                <label>Nota del Examen (Solo lectura):</label>
+                <!-- El atributo readonly evita que lo puedan modificar -->
+                <input type="text" id="notaExamen" readonly>
             </div>
             
             <div class="form-group">
@@ -111,7 +86,7 @@
             </div>
             
             <div class="form-group">
-                <label for="especialidad">Especialidad a la que postulas:</label>
+                <label for="especialidad">Especialidad:</label>
                 <select id="especialidad" required>
                     <option value="">Selecciona una especialidad...</option>
                     <!-- Se carga desde JS -->
@@ -131,10 +106,38 @@
                 <label for="estudioMendoza" style="margin-bottom: 0;">Soy egresado de una facultad en Mendoza</label>
             </div>
             
-            <button type="submit">Actualizar Datos y Ver Ranking</button>
-        </form>
+            <button id="btnGuardar">Actualizar Datos y Ver Ranking</button>
+            <button id="btnVolver" style="background-color: #6c757d; margin-top: 10px;">Atrás</button>
+        </div>
 
-        <div id="resultado"></div>
+        <!-- PASO 3: Resultados y Tabla -->
+        <div id="paso3">
+            <div id="resultadoFinal" class="success"></div>
+            
+            <h3 style="margin-top: 2rem; color: #0056b3; border-bottom: 2px solid #ccc; padding-bottom: 5px;">Comparativa en tu Especialidad</h3>
+            <div class="table-responsive">
+                <table id="tablaCompetidores">
+                    <thead>
+                        <tr>
+                            <th>Pos.</th>
+                            <th>DNI</th>
+                            <th>Nota Examen</th>
+                            <th>Promedio</th>
+                            <th>Nota Final</th>
+                            <th>Hospital Elegido</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Se llena con JS -->
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="location.reload()" style="background-color: #28a745; margin-top: 1.5rem;">Hacer otra consulta</button>
+        </div>
+
+        <!-- Mensajes de Sistema -->
+        <div id="loading" class="loader">Procesando datos...</div>
+        <div id="errorBox" class="error"></div>
     </div>
 
     <script type="module" src="app.js"></script>
