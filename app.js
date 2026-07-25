@@ -3,13 +3,13 @@ import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasej
 
 // 1. TU CONFIGURACIÓN DE FIREBASE AQUÍ
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  databaseURL: "https://TU_PROYECTO-default-rtdb.firebaseio.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
+  authDomain: "ranking-residencias.firebaseapp.com",
+  databaseURL: "https://ranking-residencias-default-rtdb.firebaseio.com",
+  projectId: "ranking-residencias",
+  storageBucket: "ranking-residencias.firebasestorage.app",
+  messagingSenderId: "455818361669",
+  appId: "1:455818361669:web:c16e96cddd06b280ab9c2c"
 };
 
 const app = initializeApp(firebaseConfig);
