@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// 1. TU CONFIGURACIÓN DE FIREBASE AQUÍ
+// 1. TU CONFIGURACIÓN DE FIREBASE (Ya con tus datos reales)
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
   authDomain: "ranking-residencias.firebaseapp.com",
@@ -154,6 +154,26 @@ function mostrarError(mensaje) {
     errorBox.innerHTML = `<strong>Error:</strong> ${mensaje}`;
 }
 
+// -----------------------------------------------------
+// FUNCIÓN INTELIGENTE DE BÚSQUEDA DE ESPECIALIDADES
+// -----------------------------------------------------
+function coincideEspecialidad(espDB, espSeleccionada) {
+    if (!espDB || !espSeleccionada) return false;
+    
+    // Si la persona ya actualizó sus datos en la página, coincidirán exactamente
+    if (espDB === espSeleccionada) return true;
+    
+    // Si no, limpiamos los nombres para comparar solo la base de la palabra
+    // Quitamos los tildes y lo pasamos a mayúsculas
+    const normalizar = (str) => str.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f´]/g, "").trim();
+    
+    const dbLimpia = normalizar(espDB);
+    const selectLimpia = normalizar(espSeleccionada.split("(")[0]); // Quitamos el " (Primer nivel)"
+    
+    // Verificamos si una palabra contiene a la otra
+    return dbLimpia.includes(selectLimpia) || selectLimpia.includes(dbLimpia);
+}
+
 // FUNCIONES DE CÁLCULO Y DIBUJO DE TABLA
 function calcularPuntajeBase(registro) {
     // Si ya actualizó datos, usamos su nota guardada. Si no, calculamos el 90% del examen.
@@ -164,7 +184,8 @@ function calcularPuntajeBase(registro) {
 }
 
 function generarTabla(especialidadABuscar, dniSeleccionado = null) {
-    let competidores = registrosBD.filter(p => p && p.ESPECIALIDAD === especialidadABuscar);
+    // ACA USAMOS LA NUEVA FUNCION INTELIGENTE
+    let competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
     
     // Ordenar descendente usando la nota final real o provisoria
     competidores.sort((a, b) => calcularPuntajeBase(b) - calcularPuntajeBase(a));
@@ -268,8 +289,14 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
         document.getElementById('notaExamen').value = miRegistro.NOTA;
         if (miRegistro.PROMEDIO) document.getElementById('promedio').value = miRegistro.PROMEDIO;
         
+        // Si ya cargó los datos una vez, autocompletamos su especialidad en el formulario
         if (miRegistro.ESPECIALIDAD) {
-            especialidadSelect.value = miRegistro.ESPECIALIDAD;
+            // Buscamos si la especialidad guardada hace match con alguna del Select de la web
+            Array.from(especialidadSelect.options).forEach(opt => {
+                if (coincideEspecialidad(miRegistro.ESPECIALIDAD, opt.value)) {
+                    especialidadSelect.value = opt.value;
+                }
+            });
             especialidadSelect.dispatchEvent(new Event('change'));
             if (miRegistro.HTAL) hospitalSelect.value = miRegistro.HTAL;
         }
