@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// 1. TU CONFIGURACIÓN DE FIREBASE (Ya con tus datos reales)
+// 1. TU CONFIGURACIÓN DE FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
   authDomain: "ranking-residencias.firebaseapp.com",
@@ -102,13 +102,11 @@ const datosResidencias = {
     "UROLOGÍA (Primer nivel)": ["Hospital Central", "Hospital Español", "Uroclínica"]
 };
 
-// Estado Global
 let registrosBD = [];
 let llavesBD = [];
 let indiceUsuarioActual = -1;
 let miDNI = "";
 
-// Elementos DOM
 const paso1 = document.getElementById('paso1');
 const paso2 = document.getElementById('paso2');
 const paso3 = document.getElementById('paso3');
@@ -154,41 +152,30 @@ function mostrarError(mensaje) {
     errorBox.innerHTML = `<strong>Error:</strong> ${mensaje}`;
 }
 
-// -----------------------------------------------------
-// FUNCIÓN INTELIGENTE DE BÚSQUEDA DE ESPECIALIDADES
-// -----------------------------------------------------
 function coincideEspecialidad(espDB, espSeleccionada) {
     if (!espDB || !espSeleccionada) return false;
-    
-    // Si la persona ya actualizó sus datos en la página, coincidirán exactamente
     if (espDB === espSeleccionada) return true;
     
-    // Si no, limpiamos los nombres para comparar solo la base de la palabra
-    // Quitamos los tildes y lo pasamos a mayúsculas
     const normalizar = (str) => str.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f´]/g, "").trim();
-    
     const dbLimpia = normalizar(espDB);
-    const selectLimpia = normalizar(espSeleccionada.split("(")[0]); // Quitamos el " (Primer nivel)"
+    const selectLimpia = normalizar(espSeleccionada.split("(")[0]);
     
-    // Verificamos si una palabra contiene a la otra
     return dbLimpia.includes(selectLimpia) || selectLimpia.includes(dbLimpia);
 }
 
-// FUNCIONES DE CÁLCULO Y DIBUJO DE TABLA
-function calcularPuntajeBase(registro) {
-    // Si ya actualizó datos, usamos su nota guardada. Si no, calculamos el 90% del examen.
+function obtenerValorOrden(registro) {
     if (registro.NOTA_FINAL && !isNaN(registro.NOTA_FINAL)) {
         return parseFloat(registro.NOTA_FINAL);
     }
-    return parseFloat(registro.NOTA) * 0.90;
+    const notaEx = parseFloat(registro.NOTA) || 0;
+    return notaEx * 0.90;
 }
 
 function generarTabla(especialidadABuscar, dniSeleccionado = null) {
-    // ACA USAMOS LA NUEVA FUNCION INTELIGENTE
     let competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
     
-    // Ordenar descendente usando la nota final real o provisoria
-    competidores.sort((a, b) => calcularPuntajeBase(b) - calcularPuntajeBase(a));
+    // ORDENAMIENTO DESCENDENTE CORRECTO (de mayor a menor nota)
+    competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
 
     const tbody = document.querySelector('#tablaCompetidores tbody');
     tbody.innerHTML = '';
@@ -202,8 +189,8 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
             miPosicion = index + 1;
         }
 
-        let notaMapeada = calcularPuntajeBase(c).toFixed(2);
-        let iconoCarga = c.NOTA_FINAL ? '✅' : '⏳';
+        let valorMostrado = obtenerValorOrden(c).toFixed(2);
+        let iconoEstado = c.NOTA_FINAL ? '✅' : '⏳ (Solo examen)';
         let valPromedio = c.PROMEDIO ? c.PROMEDIO : '-';
         let valHospital = c.HTAL ? c.HTAL : '-';
 
@@ -212,7 +199,7 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
             <td>${c.DNI}</td>
             <td>${c.NOTA}</td>
             <td>${valPromedio}</td>
-            <td><strong>${notaMapeada}</strong> ${iconoCarga}</td>
+            <td><strong>${valorMostrado}</strong> <span style="font-size:0.8rem">${iconoEstado}</span></td>
             <td>${valHospital}</td>
         `;
         tbody.appendChild(tr);
@@ -221,9 +208,7 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
     return { total: competidores.length, miPosicion: miPosicion };
 }
 
-// -----------------------------------------------------
-// CAMINO 1: SNOOPEAR EL RANKING (CHUSMEAR)
-// -----------------------------------------------------
+// CAMINO 1: VER RANKING LIBRE
 document.getElementById('btnVerLibre').addEventListener('click', async () => {
     const espElegida = especialidadLibreSelect.value;
     if (!espElegida) return mostrarError("Elegí una especialidad para ver.");
@@ -239,7 +224,7 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
         
         generarTabla(espElegida, null);
         
-        resultadoFinal.style.display = 'none'; // Ocultamos el mensaje de éxito personal
+        resultadoFinal.style.display = 'none';
         tituloTabla.innerText = `Ranking General: ${espElegida}`;
         
         mostrarCarga(false);
@@ -250,9 +235,7 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
     }
 });
 
-// -----------------------------------------------------
-// CAMINO 2: ACTUALIZAR DATOS DE USUARIO
-// -----------------------------------------------------
+// CAMINO 2: CARGAR PROMEDIO
 document.getElementById('btnSiguiente').addEventListener('click', async () => {
     const dniInput = document.getElementById('dniBuscador').value.trim();
     if (!dniInput) return mostrarError("Debes ingresar un DNI.");
@@ -289,9 +272,7 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
         document.getElementById('notaExamen').value = miRegistro.NOTA;
         if (miRegistro.PROMEDIO) document.getElementById('promedio').value = miRegistro.PROMEDIO;
         
-        // Si ya cargó los datos una vez, autocompletamos su especialidad en el formulario
         if (miRegistro.ESPECIALIDAD) {
-            // Buscamos si la especialidad guardada hace match con alguna del Select de la web
             Array.from(especialidadSelect.options).forEach(opt => {
                 if (coincideEspecialidad(miRegistro.ESPECIALIDAD, opt.value)) {
                     especialidadSelect.value = opt.value;
@@ -318,7 +299,7 @@ document.getElementById('btnVolver').addEventListener('click', () => {
     errorBox.style.display = 'none';
 });
 
-// PASO 2.5: GUARDAR
+// GUARDAR DATOS Y NOTA FINAL
 document.getElementById('btnGuardar').addEventListener('click', async () => {
     const promedioTxt = document.getElementById('promedio').value;
     if (!promedioTxt) return mostrarError("Debes ingresar tu promedio.");
@@ -337,13 +318,11 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
         const miRegistro = registrosBD[llavesBD.indexOf(indiceUsuarioActual)];
         const notaExamen = parseFloat(miRegistro.NOTA);
 
-        // Matemáticas
         const puntosExamen = notaExamen * 0.90;
         const puntosPromedio = promedio * 0.5;
         const puntosMendoza = estudioMendoza ? 5 : 0;
         const notaFinal = (puntosExamen + puntosPromedio + puntosMendoza).toFixed(2);
 
-        // Actualizar Firebase
         const updates = {};
         updates[`/${indiceUsuarioActual}/PROMEDIO`] = promedio;
         updates[`/${indiceUsuarioActual}/ESPECIALIDAD`] = especialidad;
@@ -352,30 +331,6 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
 
         await update(ref(db), updates);
 
-        // Actualizar array en memoria para dibujar tabla
         miRegistro.PROMEDIO = promedio;
         miRegistro.ESPECIALIDAD = especialidad;
-        miRegistro.HTAL = hospital;
-        miRegistro.NOTA_FINAL = parseFloat(notaFinal);
-
-        // Dibujar Tabla y sacar cálculos
-        let resumen = generarTabla(especialidad, miDNI);
-
-        resultadoFinal.style.display = 'block';
-        resultadoFinal.innerHTML = `
-            <h3>¡Datos actualizados con éxito!</h3>
-            <p style="font-size: 1.1rem; margin: 10px 0;">Tu posición actual es <strong>${resumen.miPosicion} de ${resumen.total}</strong> postulantes en ${especialidad}.</p>
-            <p>Nota Examen: ${notaExamen} | Promedio: ${promedio} ${estudioMendoza ? '| (+5 pts Mza)' : ''}</p>
-            <p style="font-size: 1.2rem; color: #155724;"><strong>Nota Final Definitiva: ${notaFinal}</strong></p>
-        `;
-        tituloTabla.innerText = "Comparativa en tu Especialidad";
-
-        mostrarCarga(false);
-        paso2.style.display = 'none';
-        paso3.style.display = 'block';
-
-    } catch (error) {
-        mostrarError("Error guardando datos: " + error.message);
-        document.getElementById('btnGuardar').disabled = false;
-    }
-});
+        m
