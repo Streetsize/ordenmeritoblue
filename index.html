@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ranking Residencias Médicas 2026</title>
     <style>
+        /* ESTILOS GENERALES (MODO CLARO POR DEFECTO) */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             max-width: 750px; 
@@ -12,24 +13,24 @@
             padding: 1rem; 
             background-color: #f0f2f5; 
             color: #333;
+            transition: background-color 0.3s, color 0.3s;
         }
         .container { 
             background: white; 
             padding: 2rem; 
             border-radius: 8px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
-        h2 { text-align: center; color: #0056b3; margin-bottom: 1.5rem; }
+        h2 { text-align: center; color: #0056b3; margin-bottom: 0.5rem; }
         .form-group { margin-bottom: 1.5rem; }
         label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
         input[type="text"], input[type="number"], select { 
             width: 100%; padding: 0.75rem; border: 1px solid #ccc; 
             border-radius: 4px; box-sizing: border-box; font-size: 1rem;
+            transition: background-color 0.3s, color 0.3s;
         }
-        /* Para navegadores webkit: muestra siempre la flechita del datalist */
-        input::-webkit-calendar-picker-indicator {
-            opacity: 1;
-        }
+        input::-webkit-calendar-picker-indicator { opacity: 1; }
         input[readonly] { background-color: #e9ecef; cursor: not-allowed; color: #495057; font-weight: bold; }
         
         .checkbox-group { 
@@ -38,16 +39,19 @@
         }
         .checkbox-group input { width: auto; margin: 0; transform: scale(1.2); }
         
+        /* BOTONES */
         button { 
             width: 100%; padding: 1rem; color: white; 
             border: none; border-radius: 4px; font-size: 1.1rem; font-weight: bold;
-            cursor: pointer; transition: background 0.3s; 
+            cursor: pointer; transition: background 0.3s; margin-top: 5px;
         }
         .btn-primary { background: #0056b3; }
         .btn-primary:hover { background: #004494; }
         .btn-secondary { background: #17a2b8; }
         .btn-secondary:hover { background: #117a8b; }
-        .btn-outline { background: #6c757d; margin-top: 10px;}
+        .btn-outline { background: #6c757d; }
+        .btn-whatsapp { background: #25D366; }
+        .btn-whatsapp:hover { background: #128C7E; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         
         .card-opcion { background: #f8f9fa; border: 1px solid #dee2e6; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; }
@@ -58,6 +62,7 @@
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 4px; margin-top: 1rem; display: none; }
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 1rem; border-radius: 4px; text-align: center; }
         
+        /* TABLA */
         .table-responsive { overflow-x: auto; margin-top: 1rem; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         th, td { padding: 0.75rem; border: 1px solid #ddd; text-align: center; }
@@ -72,15 +77,39 @@
         }
         .fila-afuera td { background-color: #fff3f3; color: #6c757d; }
         .leyenda { font-size: 0.85rem; color: #666; text-align: right; margin-top: 0.5rem; }
+        
+        /* CONTROLES EXTRA (MODO OSCURO Y DISCLAIMER) */
+        .theme-switch-wrapper { display: flex; justify-content: flex-end; margin-bottom: -30px; position: relative; z-index: 10; }
+        .theme-switch { width: auto; background: none; border: none; font-size: 1.8rem; padding: 0; cursor: pointer; }
+        .disclaimer { text-align: center; font-size: 0.8rem; color: #777; margin-top: 2rem; padding: 0 1rem; }
+
+        /* --------------- ESTILOS MODO OSCURO --------------- */
+        body.dark-mode { background-color: #121212; color: #e0e0e0; }
+        body.dark-mode .container { background-color: #1e1e1e; box-shadow: 0 4px 12px rgba(255,255,255,0.05); }
+        body.dark-mode h2, body.dark-mode h3, body.dark-mode #tituloTabla { color: #66b2ff; }
+        body.dark-mode .card-opcion, body.dark-mode .checkbox-group { background-color: #2a2a2a; border-color: #444; }
+        body.dark-mode .card-opcion h3 { color: #e0e0e0; }
+        body.dark-mode input[type="text"], body.dark-mode input[type="number"], body.dark-mode select { background-color: #2c2c2c; color: #fff; border-color: #444; }
+        body.dark-mode input[readonly] { background-color: #3a3a3a; color: #aaa; }
+        body.dark-mode th { background-color: #003366; }
+        body.dark-mode tr td { border-color: #444; }
+        body.dark-mode tr:nth-child(even) td { background-color: #262626; }
+        body.dark-mode .fila-usuario td { background-color: #1b4332 !important; border-left-color: #28a745; color: #fff; }
+        body.dark-mode .fila-afuera td { background-color: #3a1518 !important; color: #999; }
+        body.dark-mode .leyenda, body.dark-mode .disclaimer { color: #aaa; }
     </style>
 </head>
 <body>
+    <div class="theme-switch-wrapper">
+        <button id="toggleTheme" class="theme-switch" title="Cambiar tema">🌙</button>
+    </div>
+    
     <div class="container">
         <h2>Ranking Residencias 2026</h2>
         
         <!-- PASO 1: Inicio -->
         <div id="paso1">
-            <p style="text-align: center; color: #555; margin-bottom: 2rem;">¿Qué querés hacer?</p>
+            <p style="text-align: center; color: #777; margin-bottom: 2rem;">Mendoza</p>
             
             <div class="card-opcion">
                 <h3>Soy Postulante: Cargar mi promedio</h3>
@@ -100,6 +129,9 @@
                 </div>
                 <button id="btnVerLibre" class="btn-secondary">Ir directo al Ranking</button>
             </div>
+            
+            <!-- Compartir inicial -->
+            <button class="btn-whatsapp btnCompartir">📲 Compartir web por WhatsApp</button>
         </div>
 
         <!-- PASO 2: Confirmación de Datos -->
@@ -162,12 +194,17 @@
             </div>
             <div class="leyenda">✅ Datos confirmados | ⏳ Puntaje provisorio (solo base examen)</div>
             
-            <button onclick="location.reload()" style="background-color: #28a745; margin-top: 1.5rem;" class="btn-primary">Volver al Inicio</button>
+            <button onclick="location.reload()" style="background-color: #28a745; margin-top: 1.5rem;" class="btn-primary">🏠 Volver al Inicio</button>
+            <button class="btn-whatsapp btnCompartir">📲 Compartir este ranking a un colega</button>
         </div>
 
         <!-- Mensajes de Sistema -->
         <div id="loading" class="loader">Conectando con la base de datos...</div>
         <div id="errorBox" class="error"></div>
+    </div>
+    
+    <div class="disclaimer">
+        ⚠️ Esta es una herramienta colaborativa, estimativa y <strong>no oficial</strong>. Los resultados oficiales de adjudicación dependerán exclusivamente del Ministerio de Salud. Si creés que tus datos precargados son incorrectos, completalos manualmente.
     </div>
 
     <script type="module" src="app.js"></script>
