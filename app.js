@@ -204,23 +204,29 @@ const errorBox = document.getElementById('errorBox');
 const resultadoFinal = document.getElementById('resultadoFinal');
 const tituloTabla = document.getElementById('tituloTabla');
 
-const especialidadSelect = document.getElementById('especialidad');
+// Variables conectadas a los nuevos Datalist
+const especialidadInput = document.getElementById('especialidad');
 const hospitalSelect = document.getElementById('hospital');
-const especialidadLibreSelect = document.getElementById('especialidadLibre');
+const especialidadLibreInput = document.getElementById('especialidadLibre');
+const listaEsp = document.getElementById('listaEsp');
+const listaEspLibre = document.getElementById('listaEspLibre');
 
 window.onload = function() {
     const especialidades = Object.keys(datosResidencias).sort();
     especialidades.forEach(esp => {
-        especialidadSelect.appendChild(new Option(esp, esp));
-        especialidadLibreSelect.appendChild(new Option(esp, esp));
+        // Llenamos el componente nativo de autocompletado
+        listaEsp.appendChild(new Option(esp, esp));
+        listaEspLibre.appendChild(new Option(esp, esp));
     });
 };
 
-especialidadSelect.addEventListener('change', function() {
-    const espSelec = this.value;
+// Escucha cada vez que el usuario escribe o elige una opción
+especialidadInput.addEventListener('input', function() {
+    const espSelec = this.value.trim();
     hospitalSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
     
-    if (espSelec) {
+    // Solo habilitamos el hospital si lo que escribió/seleccionó es exacto a la base
+    if (datosResidencias[espSelec]) {
         hospitalSelect.disabled = false;
         datosResidencias[espSelec].sort().forEach(hosp => {
             hospitalSelect.appendChild(new Option(hosp, hosp));
@@ -278,21 +284,11 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
     // ORDENAMIENTO DESCENDENTE DE MAYOR A MENOR
     competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
 
-    const theadTr = document.querySelector('#tablaCompetidores thead tr');
-    theadTr.innerHTML = `
-        <th>Pos.</th>
-        <th>DNI</th>
-        <th>Examen</th>
-        <th>Promedio</th>
-        <th>Nota Final</th>
-        <th>Hospital</th>
-    `;
-
     const tbody = document.querySelector('#tablaCompetidores tbody');
     tbody.innerHTML = '';
     
     let miPosicion = 0;
-    let cuposDisponibles = cuposPorEspecialidad[especialidadABuscar] || 0; // Buscamos cuántos cupos hay
+    let cuposDisponibles = cuposPorEspecialidad[especialidadABuscar] || 0;
 
     competidores.forEach((c, index) => {
         const tr = document.createElement('tr');
@@ -303,12 +299,12 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
             miPosicion = puestoActual;
         }
 
-        // Si existe un cupo definido, verificamos si este registro es el primero que queda afuera
+        // Diseño visual de quienes quedan debajo del corte
         if (cuposDisponibles > 0 && puestoActual > cuposDisponibles) {
             tr.classList.add('fila-afuera');
         }
         
-        // Si es exactamente la fila posterior al último cupo, aplicamos la línea roja
+        // Línea roja indicadora de corte
         if (cuposDisponibles > 0 && puestoActual === cuposDisponibles + 1) {
             tr.classList.add('fila-corte');
         }
@@ -318,7 +314,6 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
         let valPromedio = c.PROMEDIO ? c.PROMEDIO : 'Est. (8.0)';
         let valHospital = c.HTAL ? c.HTAL : '-';
 
-        // Si es la fila de corte, le agregamos el cartelito en la primera celda
         let contenidoPosicion = `<strong>${puestoActual}</strong>`;
         if (cuposDisponibles > 0 && puestoActual === cuposDisponibles + 1) {
             contenidoPosicion += `<span class="etiqueta-corte">Límite Cupos</span>`;
@@ -340,8 +335,8 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
 
 // CAMINO 1: VER RANKING
 document.getElementById('btnVerLibre').addEventListener('click', async () => {
-    const espElegida = especialidadLibreSelect.value;
-    if (!espElegida) return mostrarError("Elegí una opción del ranking para ver.");
+    const espElegida = especialidadLibreInput.value.trim();
+    if (!espElegida || !datosResidencias[espElegida]) return mostrarError("Elegí o escribí una especialidad válida de la lista.");
 
     mostrarCarga(true);
     
@@ -403,12 +398,10 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
         if (miRegistro.PROMEDIO) document.getElementById('promedio').value = miRegistro.PROMEDIO;
         
         if (miRegistro.ESPECIALIDAD) {
-            Array.from(especialidadSelect.options).forEach(opt => {
-                if (coincideEspecialidad(miRegistro.ESPECIALIDAD, opt.value)) {
-                    especialidadSelect.value = opt.value;
-                }
-            });
-            especialidadSelect.dispatchEvent(new Event('change'));
+            // Asigna el texto al input y dispara el evento para habilitar el selector de hospital
+            especialidadInput.value = miRegistro.ESPECIALIDAD;
+            especialidadInput.dispatchEvent(new Event('input'));
+            
             if (miRegistro.HTAL) hospitalSelect.value = miRegistro.HTAL;
         }
 
@@ -435,11 +428,13 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
     if (!promedioTxt) return mostrarError("Debes ingresar tu promedio.");
     
     const promedio = parseFloat(promedioTxt.replace(',', '.'));
-    const especialidad = especialidadSelect.value;
+    const especialidad = especialidadInput.value.trim();
     const hospital = hospitalSelect.value;
     const estudioMendoza = document.getElementById('estudioMendoza').checked;
 
-    if (!especialidad || !hospital) return mostrarError("Falta especialidad u hospital.");
+    if (!especialidad || !datosResidencias[especialidad] || !hospital) {
+        return mostrarError("Asegurate de haber elegido una especialidad válida de la lista y un hospital.");
+    }
 
     mostrarCarga(true);
     document.getElementById('btnGuardar').disabled = true;
