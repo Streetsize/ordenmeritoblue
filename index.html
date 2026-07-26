@@ -76,10 +76,16 @@
         }
         .fila-afuera td { background-color: #fff3f3; color: #6c757d; }
         .leyenda { font-size: 0.85rem; color: #666; text-align: right; margin-top: 0.5rem; }
-        
         /* CONTROLES EXTRA (MODO OSCURO Y DISCLAIMER) */
-        .theme-switch-wrapper { display: flex; justify-content: flex-end; margin-bottom: -30px; position: relative; z-index: 10; }
-        .theme-switch { width: auto; background: none; border: none; font-size: 1.8rem; padding: 0; cursor: pointer; }
+        .theme-switch-wrapper { display: flex; justify-content: flex-end; margin-bottom: -15px; position: relative; z-index: 10; }
+        .theme-switch { 
+            width: 40px; height: 40px; background: #fff; border: 1px solid #ccc; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; transition: all 0.3s ease; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .theme-switch:hover { background: #f8f9fa; }
+        .icon-sun { display: none; }
+        .icon-moon { display: block; }
         .disclaimer { text-align: center; font-size: 0.8rem; color: #777; margin-top: 2rem; padding: 0 1rem; }
 
         /* --------------- ESTILOS MODO OSCURO --------------- */
@@ -96,6 +102,12 @@
         body.dark-mode .fila-usuario td { background-color: #1b4332 !important; border-left-color: #28a745; color: #fff; }
         body.dark-mode .fila-afuera td { background-color: #3a1518 !important; color: #999; }
         body.dark-mode .leyenda, body.dark-mode .disclaimer { color: #aaa; }
+        
+        /* Ajuste del botón en modo oscuro */
+        body.dark-mode .theme-switch { background: #2a2a2a; border-color: #444; color: #e0e0e0; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        body.dark-mode .theme-switch:hover { background: #333; }
+        body.dark-mode .icon-sun { display: block; }
+        body.dark-mode .icon-moon { display: none; }
     </style>
 </head>
 <body>
