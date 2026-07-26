@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 
 // Inicializamos App Check con tu clave pública
 const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('PEGÁ_ACÁ_TU_CLAVE_DEL_SITIO_O_PUBLICA'),
+  provider: new ReCaptchaV3Provider('6Lf20WYtAAAAAAznZvbBVMCP2g06XAujR7bN7CyY'),
   isTokenAutoRefreshEnabled: true
 });
 
