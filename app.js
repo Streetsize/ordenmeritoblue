@@ -187,6 +187,14 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
         competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
     }
     
+    // FILTRO DE RESPETO: Ocultamos las notas excesivamente bajas
+    const NOTA_MINIMA_VISIBLE = 70; 
+    competidores = competidores.filter(p => {
+        const notaExamen = parseFloat(p.NOTA) || 0;
+        // Se muestra si su nota de examen supera el mínimo, o si es el usuario buscando su propio DNI
+        return notaExamen >= NOTA_MINIMA_VISIBLE || (dniSeleccionado && p.DNI.toString() === dniSeleccionado);
+    });
+
     // ORDENAMIENTO DESCENDENTE DE MAYOR A MENOR
     competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
 
