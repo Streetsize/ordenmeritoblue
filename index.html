@@ -26,6 +26,10 @@
             width: 100%; padding: 0.75rem; border: 1px solid #ccc; 
             border-radius: 4px; box-sizing: border-box; font-size: 1rem;
         }
+        /* Para navegadores webkit: muestra siempre la flechita del datalist */
+        input::-webkit-calendar-picker-indicator {
+            opacity: 1;
+        }
         input[readonly] { background-color: #e9ecef; cursor: not-allowed; color: #495057; font-weight: bold; }
         
         .checkbox-group { 
@@ -60,32 +64,21 @@
         th { background-color: #0056b3; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .fila-usuario { background-color: #c3e6cb !important; font-weight: bold; border-left: 5px solid #28a745; }
-        .leyenda { font-size: 0.85rem; color: #666; text-align: right; margin-top: 0.5rem; }
-        .fila-corte { 
-            border-top: 3px dashed #dc3545 !important; 
-        }
+        
+        .fila-corte { border-top: 3px dashed #dc3545 !important; }
         .etiqueta-corte {
-            display: block;
-            background: #dc3545;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            margin-top: 4px;
-            text-align: center;
+            display: block; background: #dc3545; color: white; padding: 2px 6px;
+            border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-top: 4px; text-align: center;
         }
-        .fila-afuera td {
-            background-color: #fff3f3; /* Un fondito apenas rojo para los que quedan fuera */
-            color: #6c757d;
-        }
+        .fila-afuera td { background-color: #fff3f3; color: #6c757d; }
+        .leyenda { font-size: 0.85rem; color: #666; text-align: right; margin-top: 0.5rem; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Ranking Residencias 2026</h2>
         
-        <!-- PASO 1: Inicio (Doble Camino) -->
+        <!-- PASO 1: Inicio -->
         <div id="paso1">
             <p style="text-align: center; color: #555; margin-bottom: 2rem;">¿Qué querés hacer?</p>
             
@@ -98,14 +91,12 @@
                 <button id="btnSiguiente" class="btn-primary">Buscar y Continuar</button>
             </div>
 
-<div class="card-opcion">
+            <div class="card-opcion">
                 <h3>Visitante: Ver ranking (Solo lectura)</h3>
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="especialidadLibre">Elegí una especialidad para ver cómo va:</label>
-                    <select id="especialidadLibre">
-                        <option value="">Selecciona una opción...</option>
-                        <!-- Las especialidades se cargan desde JS -->
-                    </select>
+                    <input type="text" id="especialidadLibre" list="listaEspLibre" placeholder="Escribí o desplegá la lista..." autocomplete="off">
+                    <datalist id="listaEspLibre"></datalist>
                 </div>
                 <button id="btnVerLibre" class="btn-secondary">Ir directo al Ranking</button>
             </div>
@@ -126,9 +117,8 @@
             
             <div class="form-group">
                 <label for="especialidad">Especialidad definitiva:</label>
-                <select id="especialidad" required>
-                    <option value="">Selecciona una especialidad...</option>
-                </select>
+                <input type="text" id="especialidad" list="listaEsp" required placeholder="Escribí o desplegá la lista..." autocomplete="off">
+                <datalist id="listaEsp"></datalist>
             </div>
             
             <div class="form-group">
