@@ -486,34 +486,28 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
 // FUNCIONES DE INTERFAZ: MODO OSCURO Y COMPARTIR
 // ==========================================
 
-// Modo Oscuro
+// Modo Oscuro (Ahora manejado visualmente por CSS puro)
 const toggleThemeBtn = document.getElementById('toggleTheme');
-// Chequear si el usuario ya lo había puesto en oscuro antes
+
 if (localStorage.getItem('theme') === 'dark') {
     document.body.classList.add('dark-mode');
-    toggleThemeBtn.innerText = '☀️';
 }
 
 toggleThemeBtn.addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
     if (document.body.classList.contains('dark-mode')) {
         localStorage.setItem('theme', 'dark');
-        toggleThemeBtn.innerText = '☀️';
     } else {
         localStorage.setItem('theme', 'light');
-        toggleThemeBtn.innerText = '🌙';
     }
 });
 
 // Botones de Compartir WhatsApp
 document.querySelectorAll('.btnCompartir').forEach(btn => {
     btn.addEventListener('click', () => {
-        // Obtenemos la URL actual de donde esté alojada tu página
         const urlPagina = window.location.href;
-        
         let texto = `¡Mirá cómo va el ranking de las Residencias Médicas 2026! 🏥\n\nCargá tu promedio para ver tu posición real. Entrá acá:\n${urlPagina}`;
         
-        // Si el usuario está viendo una especialidad, lo agregamos al mensaje
         if (tituloTabla && tituloTabla.innerText.includes("Ranking:")) {
             const esp = tituloTabla.innerText.replace("Ranking: ", "");
             texto = `¡Mirá cómo va el corte en ${esp}! 🏥\n\nFijate tu posición en el ranking de las Residencias entrando acá:\n${urlPagina}`;
