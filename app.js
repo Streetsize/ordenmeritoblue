@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
-// 1. TU CONFIGURACIÓN DE FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
   authDomain: "ranking-residencias.firebaseapp.com",
@@ -13,6 +13,13 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// Inicializamos App Check con tu clave pública
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('PEGÁ_ACÁ_TU_CLAVE_DEL_SITIO_O_PUBLICA'),
+  isTokenAutoRefreshEnabled: true
+});
+
 const db = getDatabase(app);
 
 // --------------------------------------------------------
