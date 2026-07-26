@@ -211,13 +211,41 @@ const especialidadLibreInput = document.getElementById('especialidadLibre');
 const listaEsp = document.getElementById('listaEsp');
 const listaEspLibre = document.getElementById('listaEspLibre');
 
-window.onload = function() {
+window.onload = async function() {
+    // 1. Cargamos las opciones del buscador de especialidades
     const especialidades = Object.keys(datosResidencias).sort();
     especialidades.forEach(esp => {
-        // Llenamos el componente nativo de autocompletado
         listaEsp.appendChild(new Option(esp, esp));
         listaEspLibre.appendChild(new Option(esp, esp));
     });
+
+    // 2. Calculamos el porcentaje de participación en tiempo real
+    try {
+        const snapshot = await get(ref(db, '/'));
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            // Guardamos la BD en memoria para que luego los botones respondan instantáneamente
+            registrosBD = Array.isArray(data) ? data : Object.values(data);
+            llavesBD = Array.isArray(data) ? data.map((_, i) => i) : Object.keys(data);
+            
+            const totalPostulantes = registrosBD.length;
+            // Contamos solo los que tienen un promedio que no sea vacío ni "EN"
+            const conPromedio = registrosBD.filter(r => r.PROMEDIO && String(r.PROMEDIO).trim() !== "EN" && String(r.PROMEDIO).trim() !== "").length;
+            
+            // Calculamos el porcentaje con 1 decimal (ej: 42.9)
+            const porcentaje = ((conPromedio / totalPostulantes) * 100).toFixed(1);
+            
+            // Animamos la barra y actualizamos el texto
+            document.getElementById('textoPorcentaje').innerText = porcentaje;
+            // Un pequeño timeout para que la transición CSS se luzca al entrar a la página
+            setTimeout(() => {
+                document.getElementById('barraProgreso').style.width = porcentaje + '%';
+            }, 300);
+        }
+    } catch (error) {
+        console.error("No se pudo cargar la estadística inicial:", error);
+        document.getElementById('textoPorcentaje').innerText = "--";
+    }
 };
 
 // Escucha cada vez que el usuario escribe o elige una opción
