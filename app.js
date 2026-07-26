@@ -177,18 +177,11 @@ function obtenerValorOrden(registro) {
 }
 
 function generarTabla(especialidadABuscar, dniSeleccionado = null) {
-    let competidores;
-    let esRankingGlobal = (especialidadABuscar === "TODAS");
-
-    if (esRankingGlobal) {
-        // En el ranking global traemos a todos los que tengan al menos una nota de examen cargada
-        competidores = registrosBD.filter(p => p.NOTA && !isNaN(p.NOTA));
-    } else {
-        competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
-    }
+    // Filtramos solo a los de la especialidad elegida
+    let competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
     
     // FILTRO DE RESPETO: Ocultamos las notas excesivamente bajas
-    const NOTA_MINIMA_VISIBLE = 70; 
+    const NOTA_MINIMA_VISIBLE = 65; 
     competidores = competidores.filter(p => {
         const notaExamen = parseFloat(p.NOTA) || 0;
         // Se muestra si su nota de examen supera el mínimo, o si es el usuario buscando su propio DNI
@@ -198,27 +191,16 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
     // ORDENAMIENTO DESCENDENTE DE MAYOR A MENOR
     competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
 
-    // Ajustar encabezados de la tabla si es global o por especialidad
+    // Restauramos el encabezado de la tabla clásica
     const theadTr = document.querySelector('#tablaCompetidores thead tr');
-    if (esRankingGlobal) {
-        theadTr.innerHTML = `
-            <th>Pos.</th>
-            <th>DNI</th>
-            <th>Examen</th>
-            <th>Promedio</th>
-            <th>Nota Final</th>
-            <th>Especialidad / Hospital</th>
-        `;
-    } else {
-        theadTr.innerHTML = `
-            <th>Pos.</th>
-            <th>DNI</th>
-            <th>Examen</th>
-            <th>Promedio</th>
-            <th>Nota Final</th>
-            <th>Hospital</th>
-        `;
-    }
+    theadTr.innerHTML = `
+        <th>Pos.</th>
+        <th>DNI</th>
+        <th>Examen</th>
+        <th>Promedio</th>
+        <th>Nota Final</th>
+        <th>Hospital</th>
+    `;
 
     const tbody = document.querySelector('#tablaCompetidores tbody');
     tbody.innerHTML = '';
@@ -235,11 +217,7 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
         let valorMostrado = obtenerValorOrden(c).toFixed(2);
         let iconoEstado = c.NOTA_FINAL ? '✅' : '⏳ (Prov.)';
         let valPromedio = c.PROMEDIO ? c.PROMEDIO : 'Est. (8.0)';
-        
-        // Si es global, mostramos Especialidad + Hospital. Si es específico, solo Hospital.
         let valHospital = c.HTAL ? c.HTAL : '-';
-        let valEspecialidad = c.ESPECIALIDAD ? c.ESPECIALIDAD.split('(')[0].trim() : 'Sin definir';
-        let ultimaColumna = esRankingGlobal ? `<b>${valEspecialidad}</b><br><span style="font-size:0.8rem">${valHospital}</span>` : valHospital;
 
         tr.innerHTML = `
             <td><strong>${index + 1}</strong></td>
@@ -247,7 +225,7 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
             <td>${c.NOTA}</td>
             <td>${valPromedio}</td>
             <td><strong>${valorMostrado}</strong> <span style="font-size:0.8rem">${iconoEstado}</span></td>
-            <td>${ultimaColumna}</td>
+            <td>${valHospital}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -272,7 +250,7 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
         generarTabla(espElegida, null);
         
         resultadoFinal.style.display = 'none';
-        tituloTabla.innerText = espElegida === "TODAS" ? "Ranking Global (Todas las especialidades)" : `Ranking: ${espElegida}`;
+        tituloTabla.innerText = `Ranking General: ${espElegida}`;
         
         mostrarCarga(false);
         paso1.style.display = 'none';
