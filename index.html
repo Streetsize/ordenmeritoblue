@@ -61,6 +61,24 @@
         tr:nth-child(even) { background-color: #f9f9f9; }
         .fila-usuario { background-color: #c3e6cb !important; font-weight: bold; border-left: 5px solid #28a745; }
         .leyenda { font-size: 0.85rem; color: #666; text-align: right; margin-top: 0.5rem; }
+        .fila-corte { 
+            border-top: 3px dashed #dc3545 !important; 
+        }
+        .etiqueta-corte {
+            display: block;
+            background: #dc3545;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 4px;
+            text-align: center;
+        }
+        .fila-afuera td {
+            background-color: #fff3f3; /* Un fondito apenas rojo para los que quedan fuera */
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
@@ -72,7 +90,7 @@
             <p style="text-align: center; color: #555; margin-bottom: 2rem;">¿Qué querés hacer?</p>
             
             <div class="card-opcion">
-                <h3>🙋‍♂️ Soy Postulante: Cargar mi promedio</h3>
+                <h3>Soy Postulante: Cargar mi promedio</h3>
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="dniBuscador">Ingresá tu DNI (sin puntos):</label>
                     <input type="text" id="dniBuscador" required placeholder="Ej: 38123456" pattern="[0-9]+">
@@ -81,7 +99,7 @@
             </div>
 
 <div class="card-opcion">
-                <h3>👀 Visitante: Ver ranking (Solo lectura)</h3>
+                <h3>Visitante: Ver ranking (Solo lectura)</h3>
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="especialidadLibre">Elegí una especialidad para ver cómo va:</label>
                     <select id="especialidadLibre">
