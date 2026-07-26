@@ -17,13 +17,6 @@ const app = initializeApp(firebaseConfig);
 
 const db = getDatabase(app);
 
-// Inicializamos App Check con tu clave pública
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6Lf20WYtAAAAAAznZvbBVMCP2g06XAujR7bN7CyY'),
-  isTokenAutoRefreshEnabled: true
-});
-
-const db = getDatabase(app);
 
 // --------------------------------------------------------
 // ACÁ DEFINÍS LA CANTIDAD DE CUPOS TOTALES POR ESPECIALIDAD
