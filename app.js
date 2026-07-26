@@ -15,6 +15,95 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// --------------------------------------------------------
+// ACÁ DEFINÍS LA CANTIDAD DE CUPOS TOTALES POR ESPECIALIDAD
+// --------------------------------------------------------
+const cuposPorEspecialidad = {
+    "ANATOMÍA PATOLÓGICA (Primer nivel)": 4,
+    "ANESTESIOLOGÍA (Primer nivel)": 8,
+    "AUDIOLOGÍA (Primer nivel)": 2,
+    "BIOQUÍMICA CLÍNICA (Primer nivel)": 10,
+    "CARDIOLOGÍA PEDIÁTRICA (Segundo nivel)": 1,
+    "CARDIOLOGÍA (Primer nivel)": 18,
+    "CIRUGÍA CARDIOVASCULAR (Primer nivel)": 2,
+    "CIRUGÍA CARDIOVASCULAR (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "CIRUGÍA ESTÉTICA, PLÁSTICA Y REPARADORA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "CIRUGÍA GENERAL (Primer nivel)": 16,
+    "CIRUGÍA PEDIÁTRICA (Primer nivel)": 1,
+    "CIRUGÍA VASCULAR PERIFÉRICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "CLÍNICA MÉDICA (Primer nivel)": 57,
+    "CRECIMIENTO Y DESARROLLO (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "DERMATOLOGÍA (Primer nivel)": 4,
+    "DIAGNÓSTICO POR IMÁGENES (Primer nivel)": 14,
+    "DIAGNÓSTICO POR IMÁGENES Y MEDICINA NUCLEAR (ARTICULADA) (Primer nivel)": 2,
+    "EMERGENTOLOGÍA (Primer nivel)": 8,
+    "ENDOCRINOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "ENDOCRINOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "ENDODONCIA (Primer nivel)": 1,
+    "ENFERMERÍA COMUNITARIA (Primer nivel)": 7,
+    "ENFERMERÍA EN CONTROL DE INFECCIONES (Primer nivel)": 2,
+    "ENFERMERÍA EN CUIDADOS CRÍTICOS (Primer nivel)": 6,
+    "ENFERMERÍA EN SALUD MENTAL (Primer nivel)": 3,
+    "ENFERMERÍA GENERALISTA MÉDICO QUIRÚRGICA (Primer nivel)": 6,
+    "ENFERMERÍA NEONATAL (Primer nivel)": 4,
+    "ENFERMERÍA PEDIÁTRICA (Primer nivel)": 4,
+    "FARMACIA HOSPITALARIA (Primer nivel)": 7,
+    "FISIATRÍA (Primer nivel)": 5,
+    "GASTROENTEROLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 4,
+    "GERIATRÍA Y GERONTOLOGÍA (Primer nivel)": 2,
+    "GINECOLOGÍA INFANTO JUVENIL (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "HEMATOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "HEMATOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "HEMOTERAPIA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "INFECTOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "INFECTOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "KINESIOLOGÍA EN FISIATRÍA (Primer nivel)": 2,
+    "KINESIOLOGÍA EN NEUROLOGÍA (Primer nivel)": 2,
+    "KINESIOLOGÍA EN RESPIRATORIO DE ADULTOS (Primer nivel)": 5,
+    "KINESIOLOGÍA GENERAL (Primer nivel)": 6,
+    "KINESIOLOGÍA PEDIÁTRICA (Primer nivel)": 2,
+    "MEDICINA DE FAMILIA (Primer nivel)": 21,
+    "NEFROLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "NEFROLOGÍA (Primer nivel)": 2,
+    "NEONATOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 6,
+    "NEUMONOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "NEUMONOLOGÍA (Primer nivel)": 2,
+    "NEUMONOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "NEUROCIRUGÍA (Primer nivel)": 1,
+    "NEUROLOGÍA (Primer nivel)": 2,
+    "NEUROLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "NUTRICIÓN Y ALIMENTACIÓN DEL ADULTO (Primer nivel)": 5,
+    "NUTRICIÓN Y ALIMENTACIÓN INFANTOJUVENIL (Primer nivel)": 2,
+    "ODONTOLOGÍA DE ALTA COMPLEJIDAD (Primer nivel)": 2,
+    "ODONTOLOGÍA PREVENTIVA Y SOCIAL (Primer nivel)": 1,
+    "ODONTOPEDIATRÍA (Primer nivel)": 2,
+    "OFTALMOLOGÍA (Primer nivel)": 9,
+    "ONCOLOGÍA CLÍNICA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "ONCOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "ORTOPEDIA Y TRAUMATOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "ORTOPEDIA Y TRAUMATOLOGÍA (Primer nivel)": 11,
+    "OTORRINOLARINGOLOGÍA (Primer nivel)": 3,
+    "PEDIATRÍA (Primer nivel)": 34,
+    "PEDIATRÍA Y NEONATOLOGÍA (Ambos niveles)": 12,
+    "PEDIATRÍA Y TERAPIA INTENSIVA (Ambos niveles)": 5,
+    "PSICOLOGÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (RISAM) (Primer nivel)": 22,
+    "PSICOLOGÍA INFANTOJUVENIL (SEGUNDO NIVEL) (Segundo nivel)": 5,
+    "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": 26,
+    "PSIQUIATRIA EN SALUD MENTAL COMUNITARIA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "PSIQUIATRÍA INFANTOJUVENIL (SEGUNDO NIVEL) (Segundo nivel)": 7,
+    "RADIOTERAPIA (SEGUNDO NIVEL) (Segundo nivel)": 2,
+    "REUMATOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "TERAPIA INTENSIVA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "TERAPIA INTENSIVA (Primer nivel)": 19,
+    "TOCOGINECOLOGÍA (Primer nivel)": 23,
+    "TRABAJO SOCIAL EN SALUD MENTAL COMUNITARIA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "TRABAJO SOCIAL EN SALUD MENTAL INFANTO JUVENIL (SEGUNDO NIVEL) (Segundo nivel)": 5,
+    "TRABAJO SOCIAL EN SALUD PÚBLICA (Primer nivel)": 2,
+    "TRASPLANTE HEPATICO Y CIRUGIA HEPATO BILIO PANCREATICA (Segundo nivel)": 1,
+    "TRASPLANTOLOGÍA CLÍNICA INTRATORÁCICA (SEGUNDO NIVEL) (Segundo nivel)": 1,
+    "UROLOGÍA (Primer nivel)": 5
+};
+
 // Base de datos de Hospitales
 const datosResidencias = {
     "ANATOMÍA PATOLÓGICA (Primer nivel)": ["Hospital Central", "Hospital Luis Lagomaggiore"],
@@ -177,21 +266,18 @@ function obtenerValorOrden(registro) {
 }
 
 function generarTabla(especialidadABuscar, dniSeleccionado = null) {
-    // Filtramos solo a los de la especialidad elegida
     let competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
     
-    // FILTRO DE RESPETO: Ocultamos las notas excesivamente bajas
-    const NOTA_MINIMA_VISIBLE = 65; 
+    // FILTRO DE RESPETO
+    const NOTA_MINIMA_VISIBLE = 50; 
     competidores = competidores.filter(p => {
         const notaExamen = parseFloat(p.NOTA) || 0;
-        // Se muestra si su nota de examen supera el mínimo, o si es el usuario buscando su propio DNI
         return notaExamen >= NOTA_MINIMA_VISIBLE || (dniSeleccionado && p.DNI.toString() === dniSeleccionado);
     });
 
     // ORDENAMIENTO DESCENDENTE DE MAYOR A MENOR
     competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
 
-    // Restauramos el encabezado de la tabla clásica
     const theadTr = document.querySelector('#tablaCompetidores thead tr');
     theadTr.innerHTML = `
         <th>Pos.</th>
@@ -204,14 +290,27 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
 
     const tbody = document.querySelector('#tablaCompetidores tbody');
     tbody.innerHTML = '';
+    
     let miPosicion = 0;
+    let cuposDisponibles = cuposPorEspecialidad[especialidadABuscar] || 0; // Buscamos cuántos cupos hay
 
     competidores.forEach((c, index) => {
         const tr = document.createElement('tr');
+        const puestoActual = index + 1;
         
         if (dniSeleccionado && c.DNI.toString() === dniSeleccionado) {
-            tr.className = 'fila-usuario';
-            miPosicion = index + 1;
+            tr.classList.add('fila-usuario');
+            miPosicion = puestoActual;
+        }
+
+        // Si existe un cupo definido, verificamos si este registro es el primero que queda afuera
+        if (cuposDisponibles > 0 && puestoActual > cuposDisponibles) {
+            tr.classList.add('fila-afuera');
+        }
+        
+        // Si es exactamente la fila posterior al último cupo, aplicamos la línea roja
+        if (cuposDisponibles > 0 && puestoActual === cuposDisponibles + 1) {
+            tr.classList.add('fila-corte');
         }
 
         let valorMostrado = obtenerValorOrden(c).toFixed(2);
@@ -219,8 +318,14 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
         let valPromedio = c.PROMEDIO ? c.PROMEDIO : 'Est. (8.0)';
         let valHospital = c.HTAL ? c.HTAL : '-';
 
+        // Si es la fila de corte, le agregamos el cartelito en la primera celda
+        let contenidoPosicion = `<strong>${puestoActual}</strong>`;
+        if (cuposDisponibles > 0 && puestoActual === cuposDisponibles + 1) {
+            contenidoPosicion += `<span class="etiqueta-corte">Límite Cupos</span>`;
+        }
+
         tr.innerHTML = `
-            <td><strong>${index + 1}</strong></td>
+            <td>${contenidoPosicion}</td>
             <td>${c.DNI}</td>
             <td>${c.NOTA}</td>
             <td>${valPromedio}</td>
@@ -250,7 +355,7 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
         generarTabla(espElegida, null);
         
         resultadoFinal.style.display = 'none';
-        tituloTabla.innerText = `Ranking General: ${espElegida}`;
+        tituloTabla.innerText = `Ranking: ${espElegida}`;
         
         mostrarCarga(false);
         paso1.style.display = 'none';
