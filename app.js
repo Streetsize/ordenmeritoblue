@@ -244,6 +244,7 @@ window.onload = async function() {
             setTimeout(() => {
                 document.getElementById('barraProgreso').style.width = porcentaje + '%';
             }, 300);
+            actualizarGraficosFlujo(registrosBD);
         }
     } catch (error) {
         console.error("No se pudo cargar la estadística inicial:", error);
@@ -548,3 +549,84 @@ document.querySelectorAll('.btnCompartir').forEach(btn => {
         window.open(linkWpp, '_blank');
     });
 });
+// ==========================================
+// GRÁFICOS DINÁMICOS DE FLUJO EN TIEMPO REAL
+// ==========================================
+let chartGanancias = null;
+let chartPerdidas = null;
+
+function actualizarGraficosFlujo(registros) {
+    const flujo = {};
+    
+    // Función clave para comparar sin errores: le saca el "(Primer nivel)" y unifica mayúsculas
+    const limpiarEspecialidad = (texto) => {
+        if (!texto) return "";
+        let limpio = texto.split('(')[0].trim().toUpperCase();
+        return limpio;
+    };
+
+    // Nombres cortos para que queden lindos en el celular
+    const formatearNombre = (texto) => {
+        if (texto.includes("PSIQUIATRÍA CLÍNICA")) return "Psiquiatría";
+        if (texto.includes("PEDIATRÍA Y NEONATOLOGÍA")) return "Pediatría y Neo";
+        if (texto.includes("ORTOPEDIA Y TRAUMA")) return "Ortopedia y Traum";
+        if (texto.includes("DIAGNÓSTICO POR IMÁGENES")) return "Diagnóstico";
+        
+        // Capitaliza la primera letra (Ej: "Cirugía general")
+        return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+    };
+
+    // Revisamos cada persona en Firebase
+    registros.forEach(r => {
+        const dniStr = String(r.DNI).trim();
+        const espOriginal = window.inscripcionesOriginales ? window.inscripcionesOriginales[dniStr] : null;
+        const espActual = r.ESPECIALIDAD;
+
+        // Si la persona estaba en el archivo original y ahora tiene una especialidad actual
+        if (espOriginal && espActual) {
+            const normOrig = limpiarEspecialidad(espOriginal);
+            const normAct = limpiarEspecialidad(espActual);
+
+            // Si cambiaron realmente de especialidad, sumamos y restamos
+            if (normOrig !== normAct) {
+                flujo[normOrig] = (flujo[normOrig] || 0) - 1; // Pierde
+                flujo[normAct] = (flujo[normAct] || 0) + 1;   // Gana
+            }
+        }
+    });
+
+    let ganancias = [];
+    let perdidas = [];
+    
+    // Separamos los números positivos de los negativos
+    for (const [esp, valor] of Object.entries(flujo)) {
+        if (valor > 0) ganancias.push({ label: formatearNombre(esp), data: valor });
+        else if (valor < 0) perdidas.push({ label: formatearNombre(esp), data: Math.abs(valor) });
+    }
+
+    // Ordenamos las barras de mayor a menor
+    ganancias.sort((a, b) => b.data - a.data);
+    perdidas.sort((a, b) => b.data - a.data);
+
+    // 1. Dibujar Ganancias (Azul)
+    const ctxG = document.getElementById('chartGanancias');
+    if (chartGanancias) chartGanancias.destroy();
+    if (ctxG && ganancias.length > 0) {
+        chartGanancias = new Chart(ctxG, {
+            type: 'bar',
+            data: { labels: ganancias.map(g => g.label), datasets: [{ label: 'Personas sumadas', data: ganancias.map(g => g.data), backgroundColor: '#2a78d6', borderRadius: 4 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', stepSize: 1 } }, y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } } } }
+        });
+    }
+
+    // 2. Dibujar Pérdidas (Rojo)
+    const ctxP = document.getElementById('chartPerdidas');
+    if (chartPerdidas) chartPerdidas.destroy();
+    if (ctxP && perdidas.length > 0) {
+        chartPerdidas = new Chart(ctxP, {
+            type: 'bar',
+            data: { labels: perdidas.map(p => p.label), datasets: [{ label: 'Personas perdidas', data: perdidas.map(p => p.data), backgroundColor: '#e34948', borderRadius: 4 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', stepSize: 1 } }, y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } } } }
+        });
+    }
+}
