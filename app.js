@@ -561,11 +561,21 @@ function actualizarGraficosFlujo(registros) {
     // Empezamos con todas las especialidades en 0
     Object.keys(datosResidencias).forEach(esp => flujo[esp] = 0);
     
+    // Función interna para limpiar basuritas (como el "1053: " o espacios extra)
+    const limpiarTexto = (texto) => {
+        if (!texto) return "";
+        let limpio = texto.toString();
+        if (limpio.includes(':')) {
+            limpio = limpio.substring(limpio.indexOf(':') + 1);
+        }
+        return limpio.trim();
+    };
+
     // Calculamos si alguien se cambió de bando
     registros.forEach(r => {
         const dni = String(r.DNI).trim();
-        const espActual = r.ESPECIALIDAD;
-        const espOriginal = window.inscripcionesOriginales[dni];
+        const espActual = limpiarTexto(r.ESPECIALIDAD);
+        const espOriginal = limpiarTexto(window.inscripcionesOriginales[dni]);
         
         // Si tiene original y actual, y NO coinciden, sumamos y restamos
         if (espOriginal && espActual && espOriginal !== espActual) {
@@ -595,7 +605,7 @@ function actualizarGraficosFlujo(registros) {
 
     // 1. Dibujar Ganancias
     const ctxG = document.getElementById('chartGanancias');
-    if (chartGanancias) chartGanancias.destroy(); // Destruye el viejo para dibujar el nuevo
+    if (chartGanancias) chartGanancias.destroy();
     if (ctxG && ganancias.length > 0) {
         chartGanancias = new Chart(ctxG, {
             type: 'bar',
