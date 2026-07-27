@@ -492,6 +492,7 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
         miRegistro.ESPECIALIDAD = especialidad;
         miRegistro.HTAL = hospital;
         miRegistro.NOTA_FINAL = parseFloat(notaFinal);
+        actualizarGraficosFlujo(registrosBD);
 
         let resumen = generarTabla(especialidad, miDNI);
 
