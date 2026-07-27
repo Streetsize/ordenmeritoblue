@@ -559,36 +559,43 @@ let chartPerdidas = null;
 function actualizarGraficosFlujo(registros) {
     const flujo = {};
     
-    // Función clave para comparar sin errores: le saca el "(Primer nivel)" y unifica mayúsculas
+    // 1. UNIFICAMOS ANTES DE LA MATEMÁTICA
     const limpiarEspecialidad = (texto) => {
         if (!texto) return "";
         let limpio = texto.split('(')[0].trim().toUpperCase();
+        
+        // Metemos todas las variantes en una sola "caja" para que la resta sea exacta
+        if (limpio.includes("PSIQUIATR")) return "PSIQUIATRÍA";
+        if (limpio.includes("PEDIATRÍA Y NEO")) return "PEDIATRÍA Y NEO";
+        if (limpio.includes("ORTOPEDIA Y TRAUMA")) return "ORTOPEDIA Y TRAUMATOLOGÍA";
+        if (limpio.includes("DIAGNÓSTICO")) return "DIAGNÓSTICO POR IMÁGENES";
+        if (limpio.includes("CIRUGÍA CARDIOVASCULAR")) return "CIRUGÍA CARDIOVASCULAR";
+        
         return limpio;
     };
 
-    // Nombres cortos para que queden lindos en el celular
+    // 2. NOMBRES LINDOS PARA EL GRÁFICO
     const formatearNombre = (texto) => {
-        if (texto.includes("PSIQUIATRÍA CLÍNICA")) return "Psiquiatría";
-        if (texto.includes("PEDIATRÍA Y NEONATOLOGÍA")) return "Pediatría y Neo";
-        if (texto.includes("ORTOPEDIA Y TRAUMA")) return "Ortopedia y Traum";
-        if (texto.includes("DIAGNÓSTICO POR IMÁGENES")) return "Diagnóstico";
+        if (texto === "PSIQUIATRÍA") return "Psiquiatría";
+        if (texto === "PEDIATRÍA Y NEO") return "Pediatría y Neo";
+        if (texto === "ORTOPEDIA Y TRAUMATOLOGÍA") return "Ortopedia y Traum";
+        if (texto === "DIAGNÓSTICO POR IMÁGENES") return "Diagnóstico";
         
         // Capitaliza la primera letra (Ej: "Cirugía general")
         return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
     };
 
-    // Revisamos cada persona en Firebase
+    // Revisamos cada persona
     registros.forEach(r => {
         const dniStr = String(r.DNI).trim();
         const espOriginal = window.inscripcionesOriginales ? window.inscripcionesOriginales[dniStr] : null;
         const espActual = r.ESPECIALIDAD;
 
-        // Si la persona estaba en el archivo original y ahora tiene una especialidad actual
         if (espOriginal && espActual) {
             const normOrig = limpiarEspecialidad(espOriginal);
             const normAct = limpiarEspecialidad(espActual);
 
-            // Si cambiaron realmente de especialidad, sumamos y restamos
+            // Acá ocurre la resta neta real
             if (normOrig !== normAct) {
                 flujo[normOrig] = (flujo[normOrig] || 0) - 1; // Pierde
                 flujo[normAct] = (flujo[normAct] || 0) + 1;   // Gana
@@ -599,13 +606,12 @@ function actualizarGraficosFlujo(registros) {
     let ganancias = [];
     let perdidas = [];
     
-    // Separamos los números positivos de los negativos
+    // Separamos el flujo neto positivo del negativo
     for (const [esp, valor] of Object.entries(flujo)) {
         if (valor > 0) ganancias.push({ label: formatearNombre(esp), data: valor });
         else if (valor < 0) perdidas.push({ label: formatearNombre(esp), data: Math.abs(valor) });
     }
 
-    // Ordenamos las barras de mayor a menor
     ganancias.sort((a, b) => b.data - a.data);
     perdidas.sort((a, b) => b.data - a.data);
 
