@@ -548,3 +548,68 @@ document.querySelectorAll('.btnCompartir').forEach(btn => {
         window.open(linkWpp, '_blank');
     });
 });
+// ==========================================
+// GRÁFICOS DINÁMICOS DE FLUJO EN TIEMPO REAL
+// ==========================================
+let chartGanancias = null;
+let chartPerdidas = null;
+
+function actualizarGraficosFlujo(registros) {
+    const flujo = {};
+    // Empezamos con todas las especialidades en 0
+    Object.keys(datosResidencias).forEach(esp => flujo[esp] = 0);
+    
+    // Calculamos si alguien se cambió de bando
+    registros.forEach(r => {
+        const dni = String(r.DNI).trim();
+        const espActual = r.ESPECIALIDAD;
+        const espOriginal = window.inscripcionesOriginales[dni];
+        
+        // Si tiene original y actual, y NO coinciden, sumamos y restamos
+        if (espOriginal && espActual && espOriginal !== espActual) {
+            if (flujo[espOriginal] !== undefined) flujo[espOriginal]--;
+            if (flujo[espActual] !== undefined) flujo[espActual]++;
+        }
+    });
+
+    let ganancias = [];
+    let perdidas = [];
+    
+    for (const [esp, valor] of Object.entries(flujo)) {
+        // Reducimos nombres largos para que quepan en el celular
+        let nombreCorto = esp.split(" (")[0]; 
+        if (nombreCorto.includes("PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA")) nombreCorto = "Psiquiatría";
+        if (nombreCorto.includes("PEDIATRÍA Y NEONATOLOGÍA")) nombreCorto = "Pediatría y Neo";
+        if (nombreCorto.includes("ORTOPEDIA Y TRAUMATOLOGÍA")) nombreCorto = "Ortopedia y Traum";
+        if (nombreCorto.includes("DIAGNÓSTICO POR IMÁGENES")) nombreCorto = "Diagnóstico";
+
+        if (valor > 0) ganancias.push({ label: nombreCorto, data: valor });
+        else if (valor < 0) perdidas.push({ label: nombreCorto, data: Math.abs(valor) });
+    }
+
+    // Ordenamos de mayor a menor impacto
+    ganancias.sort((a, b) => b.data - a.data);
+    perdidas.sort((a, b) => b.data - a.data);
+
+    // 1. Dibujar Ganancias
+    const ctxG = document.getElementById('chartGanancias');
+    if (chartGanancias) chartGanancias.destroy(); // Destruye el viejo para dibujar el nuevo
+    if (ctxG && ganancias.length > 0) {
+        chartGanancias = new Chart(ctxG, {
+            type: 'bar',
+            data: { labels: ganancias.map(g => g.label), datasets: [{ label: 'Personas sumadas', data: ganancias.map(g => g.data), backgroundColor: '#2a78d6', borderRadius: 4 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', stepSize: 1 }, title: { display: true, text: 'Cantidad de personas', color: '#52514e' } }, y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } } } }
+        });
+    }
+
+    // 2. Dibujar Pérdidas
+    const ctxP = document.getElementById('chartPerdidas');
+    if (chartPerdidas) chartPerdidas.destroy();
+    if (ctxP && perdidas.length > 0) {
+        chartPerdidas = new Chart(ctxP, {
+            type: 'bar',
+            data: { labels: perdidas.map(p => p.label), datasets: [{ label: 'Personas perdidas', data: perdidas.map(p => p.data), backgroundColor: '#e34948', borderRadius: 4 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', stepSize: 1 }, title: { display: true, text: 'Cantidad de personas', color: '#52514e' } }, y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } } } }
+        });
+    }
+}
