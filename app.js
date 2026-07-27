@@ -709,14 +709,13 @@ document.getElementById('btnSimular').addEventListener('click', () => {
             </div>
         `;
         
-        // Le damos funcionalidad al botón de emergencia para que le haga el trabajo fácil
         document.getElementById('btnIrACargar').addEventListener('click', () => {
             document.getElementById('dniBuscador').value = dniSim;
-            window.scrollTo({ top: 0, behavior: 'smooth' }); // Sube la pantalla
-            document.getElementById('btnSiguiente').click(); // Inicia la carga
+            window.scrollTo({ top: 0, behavior: 'smooth' }); 
+            document.getElementById('btnSiguiente').click(); 
         });
         
-        return; // Frenamos la simulación acá
+        return;
     }
 
     // 2. CÁLCULO DE SIMULACIÓN (Si tiene promedio)
@@ -724,9 +723,20 @@ document.getElementById('btnSimular').addEventListener('click', () => {
     const miPromedio = usuarioOriginal.PROMEDIO;
     let resultados = [];
 
+    // Filtro: Lista de palabras clave de carreras que NO son Medicina
+    const carrerasNoMedicas = [
+        "AUDIOLOGÍA", "BIOQUÍMICA", "ENDODONCIA", "ENFERMERÍA", 
+        "FARMACIA", "KINESIOLOGÍA", "NUTRICIÓN", "ODONTOLOGÍA", 
+        "ODONTOPEDIATRÍA", "PSICOLOGÍA", "TRABAJO SOCIAL"
+    ];
+
     // Iteramos solo por las especialidades de Primer Nivel
     for (const [esp, cupos] of Object.entries(cuposPorEspecialidad)) {
         if (!esp.includes("(Primer nivel)")) continue;
+
+        // NUEVO: Verificamos si la especialidad pertenece a la lista negra
+        const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
+        if (esNoMedica) continue; // Si no es médica, la saltamos y pasamos a la siguiente
 
         let competidores = registrosBD.filter(r =>
             coincideEspecialidad(r.ESPECIALIDAD, esp) && r.DNI.toString() !== dniSim
@@ -755,7 +765,7 @@ document.getElementById('btnSimular').addEventListener('click', () => {
         divRes.innerHTML = `
             <div class="sim-fail" style="background-color: #fff3f3; padding: 15px; border-radius: 4px; border: 1px solid #dc3545; color: #721c24;">
                 <strong>Puntaje de simulación: ${miPuntaje} (Promedio: ${miPromedio})</strong><br>
-                Actualmente, con los promedios cargados por otros competidores, no entrarías directo en el cupo de ninguna especialidad de Primer Nivel. ¡Pero no te desanimes! Muchos postulantes no se presentan o cambian de opinión al adjudicar.
+                Actualmente, con los promedios cargados por otros competidores, no entrarías directo en el cupo de ninguna especialidad médica de Primer Nivel. ¡Pero no te desanimes! Muchos postulantes no se presentan o cambian de opinión al adjudicar.
             </div>
         `;
         return;
@@ -764,7 +774,7 @@ document.getElementById('btnSimular').addEventListener('click', () => {
     let htmlLista = `
         <div class="sim-success" style="background-color: #d4edda; padding: 15px; border-radius: 4px; border: 1px solid #c3e6cb; color: #155724; margin-bottom: 10px;">
             <strong>Puntaje: ${miPuntaje} (Promedio cargado: ${miPromedio})</strong><br>
-            Entrarías directo dentro del cupo en <strong>${resultados.length}</strong> especialidades:
+            Entrarías directo dentro del cupo en <strong>${resultados.length}</strong> especialidades médicas:
         </div>
         <ul style="list-style-type: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 300px; overflow-y: auto;">
     `;
