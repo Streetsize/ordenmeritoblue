@@ -166,7 +166,77 @@
             </div>
 
            <!-- INICIO DE GRÁFICOS DE ESPECIALIDADES DIVIDIDOS -->
+<div style="max-width: 800px; margin: 40px auto; padding: 0 15px;">
+    
+    <h3 style="font-family: Arial, sans-serif; color: #2c3e50; text-align: center; margin-bottom: 30px;">
+        Evolución de Preferencias: Elección Inicial vs. Elección Actual
+    </h3>
 
+    <!-- GRÁFICO 1: GANANCIAS (Azul) -->
+    <h4 style="font-family: Arial, sans-serif; color: #2a78d6; margin-bottom: 10px; text-align: center;">Especialidades que sumaron inscriptos</h4>
+    <div style="position: relative; width: 100%; height: 350px; margin-bottom: 40px;">
+      <canvas id="chartGanancias"></canvas>
+    </div>
+
+    <!-- GRÁFICO 2: PÉRDIDAS (Rojo) -->
+    <h4 style="font-family: Arial, sans-serif; color: #e34948; margin-bottom: 10px; text-align: center;">Especialidades que perdieron inscriptos</h4>
+    <div style="position: relative; width: 100%; height: 400px; margin-bottom: 15px;">
+      <canvas id="chartPerdidas"></canvas>
+    </div>
+    
+    <p style="font-family: Arial, sans-serif; font-size: 12px; color: #898781; text-align: center;">
+        *Sin variación de inscriptos: Cirugía General, Neurología, Oftalmología.
+    </p>
+    
+    <!-- Librería Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script>
+    // Datos de GANANCIAS (Ordenados de mayor a menor)
+    const labelsGanancias = ["Psiquiatría", "Clínica Médica", "Diagnóstico", "Pediatría y Neo", "Neumonología", "Nefrología", "Tocoginecología", "Ortopedia y Traum"];
+    const dataGanancias = [7, 4, 2, 2, 2, 1, 1, 1];
+
+    new Chart(document.getElementById('chartGanancias'), {
+      type: 'bar',
+      data: { 
+          labels: labelsGanancias, 
+          datasets: [{ label: 'Personas sumadas', data: dataGanancias, backgroundColor: '#2a78d6', borderRadius: 4 }] 
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', stepSize: 1 }, title: { display: true, text: 'Cantidad de personas', color: '#52514e' } },
+          y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } }
+        }
+      }
+    });
+
+    // Datos de PÉRDIDAS (Convertidos a positivos para el gráfico, ordenados de mayor a menor pérdida)
+    const labelsPerdidas = ["Anestesiología", "Pediatría", "Cirugía Pediátrica", "Otorrinolaringología", "Urología", "Dermatología", "Medicina de Familia", "Anatomía Patológica", "Cardiología", "Terapia Intensiva", "Neurocirugía"];
+    const dataPerdidas = [5, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1];
+
+    new Chart(document.getElementById('chartPerdidas'), {
+      type: 'bar',
+      data: { 
+          labels: labelsPerdidas, 
+          datasets: [{ label: 'Personas perdidas', data: dataPerdidas, backgroundColor: '#e34948', borderRadius: 4 }] 
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', stepSize: 1 }, title: { display: true, text: 'Cantidad de personas', color: '#52514e' } },
+          y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } }
+        }
+      }
+    });
+    </script>
+
+</div>
 <!-- FIN DE GRÁFICOS DE ESPECIALIDADES DIVIDIDOS -->
             
 
@@ -243,7 +313,7 @@
     <div class="disclaimer">
         ⚠️ Esta es una herramienta colaborativa, estimativa y <strong>no oficial</strong>. Los resultados oficiales de adjudicación dependerán exclusivamente del Ministerio de Salud. Si creés que tus datos precargados son incorrectos, completalos manualmente.
     </div>
-    <script src="datos_originales.js"></script>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
