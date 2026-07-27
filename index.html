@@ -325,7 +325,23 @@
         <div id="loading" class="loader">Conectando con la base de datos...</div>
         <div id="errorBox" class="error"></div>
     </div>
-    
+    <!-- APARTADO DE PRIVACIDAD -->
+        <div class="card-opcion" style="margin-top: 30px; padding: 1.5rem; background-color: #fff9e6; border: 1px solid #ffeeba;">
+            <h4 style="color: #856404; margin-top: 0; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Privacidad de Datos
+            </h4>
+            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+                Los datos utilizados en esta plataforma provienen de listados públicos. Sin embargo, para proteger tu privacidad, <strong>todos los DNI en los rankings se muestran censurados</strong> en sus últimos 4 dígitos.
+            </p>
+            <p style="font-size: 0.9rem; color: #555; margin-bottom: 10px;">
+                Si aún así preferís que tu información no sea visible, ingresá tu DNI aquí para solicitar la baja del sistema:
+            </p>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="dniOcultarInput" placeholder="Ej: 38123456" pattern="[0-9]+" style="flex: 1; margin: 0; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px;">
+                <button id="btnOcultarDNI" style="width: auto; padding: 0.75rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 0;">Ocultar mi DNI</button>
+            </div>
+        </div>
     <div class="disclaimer">
         ⚠️ Esta es una herramienta colaborativa, estimativa y <strong>no oficial</strong>. Los resultados oficiales de adjudicación dependerán exclusivamente del Ministerio de Salud. Si creés que tus datos precargados son incorrectos, completalos manualmente.
     </div>
