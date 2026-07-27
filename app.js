@@ -240,29 +240,80 @@ window.onload = async function() {
 // ==========================================
 // NUEVO: SISTEMA DE CENSURA Y PRIVACIDAD
 // ==========================================
-function censurarDNI(dniStr) {
-    if (!dniStr) return "";
-    let str = dniStr.toString();
+function censurarDNI(registro) {
+    // Si el usuario pidió ocultarlo (y está guardado en Firebase), mostramos "Privado"
+    if (registro.OCULTO === true) return "Privado";
+    
+    if (!registro.DNI) return "";
+    let str = registro.DNI.toString();
     if (str.length <= 4) return str;
-    // Ocultar los últimos 4 dígitos con asteriscos
+    
+    // Si no está oculto, aplicamos la censura normal de 4 dígitos
     return str.substring(0, str.length - 4) + "****";
 }
 // ==========================================
-// EVENTOS DEL APARTADO DE PRIVACIDAD
+// EVENTOS DEL APARTADO DE PRIVACIDAD (FIREBASE)
 // ==========================================
-document.getElementById('btnOcultarDNI').addEventListener('click', () => {
-    const dni = document.getElementById('dniOcultarInput').value.trim();
+document.getElementById('btnOcultarDNI').addEventListener('click', async () => {
+    const dniInput = document.getElementById('dniOcultarInput').value.trim();
+    const btn = document.getElementById('btnOcultarDNI');
     
-    if (!dni) {
+    if (!dniInput) {
         alert("Por favor, ingresá un DNI válido.");
         return;
     }
     
-    // Acá podrías conectar con Firebase en el futuro para marcar este DNI con un flag de "oculto"
-    alert(`Hemos registrado tu solicitud para ocultar el DNI ${dni}. Será removido del ranking a la brevedad.`);
-    
-    // Limpiamos el input después de solicitar
-    document.getElementById('dniOcultarInput').value = '';
+    const textoOriginal = btn.innerText;
+    btn.innerText = "Procesando...";
+    btn.disabled = true; // Desactivamos para evitar doble clic
+
+    try {
+        // Buscamos el DNI en la base de datos que ya tenemos en memoria
+        let indiceOcultar = -1;
+        let registroOcultar = null;
+
+        for (let i = 0; i < registrosBD.length; i++) {
+            if (registrosBD[i] && registrosBD[i].DNI && registrosBD[i].DNI.toString() === dniInput) {
+                indiceOcultar = llavesBD[i];
+                registroOcultar = registrosBD[i];
+                break;
+            }
+        }
+
+        if (indiceOcultar !== -1) {
+            // Lo actualizamos en Firebase para que aplique a TODOS los usuarios instantáneamente
+            const updates = {};
+            updates[`/${indiceOcultar}/OCULTO`] = true;
+            await update(ref(db), updates);
+
+            // Lo actualizamos en la memoria local por si sigue navegando sin recargar la página
+            registroOcultar.OCULTO = true;
+            
+            // Si tiene una tabla abierta, la actualizamos para que el cambio se vea en vivo
+            if (paso3.style.display === 'block') {
+                const esp = tituloTabla.innerText.replace("Ranking: ", "");
+                if (datosResidencias[esp]) generarTabla(esp, miDNI);
+            }
+
+            // Feedback visual de éxito
+            document.getElementById('dniOcultarInput').value = '';
+            btn.innerText = "¡Oculto para todos!";
+            btn.style.backgroundColor = "#28a745"; // Color verde
+        } else {
+            alert("No encontramos ese DNI en el padrón.");
+            btn.innerText = textoOriginal;
+        }
+    } catch (error) {
+        alert("Hubo un error de conexión: " + error.message);
+        btn.innerText = textoOriginal;
+    }
+
+    // Devolvemos el botón a la normalidad después de 3 segundos
+    setTimeout(() => {
+        btn.innerText = "Ocultar mi DNI";
+        btn.style.backgroundColor = "#6c757d";
+        btn.disabled = false;
+    }, 3000);
 });
 
 // Permitir usar la tecla Enter estando dentro del input de privacidad
@@ -272,7 +323,6 @@ document.getElementById('dniOcultarInput').addEventListener('keypress', function
         document.getElementById('btnOcultarDNI').click();
     }
 });
-
 especialidadInput.addEventListener('input', function() {
     const espSelec = this.value.trim();
     hospitalSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
@@ -366,7 +416,7 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
         }
         
         // APLICANDO LA CENSURA DEL DNI AQUÍ
-        let dniMostrado = censurarDNI(c.DNI);
+        let dniMostrado = censurarDNI(c);
 
         tr.innerHTML = `
             <td>${contenidoPosicion}</td>
