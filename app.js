@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-// Podés borrar la importación de App Check de la línea 3.
 
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
@@ -13,14 +12,9 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
-
 const db = getDatabase(app);
 
-
-// --------------------------------------------------------
-// ACÁ DEFINÍS LA CANTIDAD DE CUPOS TOTALES POR ESPECIALIDAD
-// --------------------------------------------------------
+// ... [MANTENER AQUÍ TUS OBJETOS cuposPorEspecialidad Y datosResidencias INTACTOS] ...
 const cuposPorEspecialidad = {
     "ANATOMÍA PATOLÓGICA (Primer nivel)": 4,
     "ANESTESIOLOGÍA (Primer nivel)": 8,
@@ -107,7 +101,6 @@ const cuposPorEspecialidad = {
     "UROLOGÍA (Primer nivel)": 5
 };
 
-// Base de datos de Hospitales
 const datosResidencias = {
     "ANATOMÍA PATOLÓGICA (Primer nivel)": ["Hospital Central", "Hospital Luis Lagomaggiore"],
     "ANESTESIOLOGÍA (Primer nivel)": ["Hospital Central", "Hospital Luis Lagomaggiore", "Hospital Teodoro Schestakow"],
@@ -207,7 +200,6 @@ const errorBox = document.getElementById('errorBox');
 const resultadoFinal = document.getElementById('resultadoFinal');
 const tituloTabla = document.getElementById('tituloTabla');
 
-// Variables conectadas a los nuevos Datalist
 const especialidadInput = document.getElementById('especialidad');
 const hospitalSelect = document.getElementById('hospital');
 const especialidadLibreInput = document.getElementById('especialidadLibre');
@@ -215,32 +207,25 @@ const listaEsp = document.getElementById('listaEsp');
 const listaEspLibre = document.getElementById('listaEspLibre');
 
 window.onload = async function() {
-    // 1. Cargamos las opciones del buscador de especialidades
     const especialidades = Object.keys(datosResidencias).sort();
     especialidades.forEach(esp => {
         listaEsp.appendChild(new Option(esp, esp));
         listaEspLibre.appendChild(new Option(esp, esp));
     });
 
-    // 2. Calculamos el porcentaje de participación en tiempo real
     try {
         const snapshot = await get(ref(db, '/'));
         if (snapshot.exists()) {
             const data = snapshot.val();
-            // Guardamos la BD en memoria para que luego los botones respondan instantáneamente
             registrosBD = Array.isArray(data) ? data : Object.values(data);
             llavesBD = Array.isArray(data) ? data.map((_, i) => i) : Object.keys(data);
             
             const totalPostulantes = registrosBD.length;
-            // Contamos solo los que tienen un promedio que no sea vacío ni "EN"
             const conPromedio = registrosBD.filter(r => r.PROMEDIO && String(r.PROMEDIO).trim() !== "EN" && String(r.PROMEDIO).trim() !== "").length;
             
-            // Calculamos el porcentaje con 1 decimal (ej: 42.9)
             const porcentaje = ((conPromedio / totalPostulantes) * 100).toFixed(1);
             
-            // Animamos la barra y actualizamos el texto
             document.getElementById('textoPorcentaje').innerText = porcentaje;
-            // Un pequeño timeout para que la transición CSS se luzca al entrar a la página
             setTimeout(() => {
                 document.getElementById('barraProgreso').style.width = porcentaje + '%';
             }, 300);
@@ -252,12 +237,46 @@ window.onload = async function() {
     }
 };
 
-// Escucha cada vez que el usuario escribe o elige una opción
+// ==========================================
+// NUEVO: SISTEMA DE CENSURA Y PRIVACIDAD
+// ==========================================
+function censurarDNI(dniStr) {
+    if (!dniStr) return "";
+    let str = dniStr.toString();
+    if (str.length <= 4) return str;
+    // Ocultar los últimos 4 dígitos con asteriscos
+    return str.substring(0, str.length - 4) + "****";
+}
+// ==========================================
+// EVENTOS DEL APARTADO DE PRIVACIDAD
+// ==========================================
+document.getElementById('btnOcultarDNI').addEventListener('click', () => {
+    const dni = document.getElementById('dniOcultarInput').value.trim();
+    
+    if (!dni) {
+        alert("Por favor, ingresá un DNI válido.");
+        return;
+    }
+    
+    // Acá podrías conectar con Firebase en el futuro para marcar este DNI con un flag de "oculto"
+    alert(`Hemos registrado tu solicitud para ocultar el DNI ${dni}. Será removido del ranking a la brevedad.`);
+    
+    // Limpiamos el input después de solicitar
+    document.getElementById('dniOcultarInput').value = '';
+});
+
+// Permitir usar la tecla Enter estando dentro del input de privacidad
+document.getElementById('dniOcultarInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnOcultarDNI').click();
+    }
+});
+
 especialidadInput.addEventListener('input', function() {
     const espSelec = this.value.trim();
     hospitalSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
     
-    // Solo habilitamos el hospital si lo que escribió/seleccionó es exacto a la base
     if (datosResidencias[espSelec]) {
         hospitalSelect.disabled = false;
         datosResidencias[espSelec].sort().forEach(hosp => {
@@ -290,7 +309,6 @@ function coincideEspecialidad(espDB, espSeleccionada) {
     return dbLimpia.includes(selectLimpia) || selectLimpia.includes(dbLimpia);
 }
 
-// CÁLCULO INTELIGENTE
 function obtenerValorOrden(registro) {
     if (registro.NOTA_FINAL && !isNaN(registro.NOTA_FINAL)) {
         return parseFloat(registro.NOTA_FINAL);
@@ -306,14 +324,12 @@ function obtenerValorOrden(registro) {
 function generarTabla(especialidadABuscar, dniSeleccionado = null) {
     let competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
     
-    // FILTRO DE RESPETO
     const NOTA_MINIMA_VISIBLE = 50; 
     competidores = competidores.filter(p => {
         const notaExamen = parseFloat(p.NOTA) || 0;
         return notaExamen >= NOTA_MINIMA_VISIBLE || (dniSeleccionado && p.DNI.toString() === dniSeleccionado);
     });
 
-    // ORDENAMIENTO DESCENDENTE DE MAYOR A MENOR
     competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
 
     const tbody = document.querySelector('#tablaCompetidores tbody');
@@ -331,12 +347,10 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
             miPosicion = puestoActual;
         }
 
-        // Diseño visual de quienes quedan debajo del corte
         if (cuposDisponibles > 0 && puestoActual > cuposDisponibles) {
             tr.classList.add('fila-afuera');
         }
         
-        // Línea roja indicadora de corte
         if (cuposDisponibles > 0 && puestoActual === cuposDisponibles + 1) {
             tr.classList.add('fila-corte');
         }
@@ -350,10 +364,13 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
         if (cuposDisponibles > 0 && puestoActual === cuposDisponibles + 1) {
             contenidoPosicion += `<span class="etiqueta-corte">Límite Cupos</span>`;
         }
+        
+        // APLICANDO LA CENSURA DEL DNI AQUÍ
+        let dniMostrado = censurarDNI(c.DNI);
 
         tr.innerHTML = `
             <td>${contenidoPosicion}</td>
-            <td>${c.DNI}</td>
+            <td>${dniMostrado}</td>
             <td>${c.NOTA}</td>
             <td>${valPromedio}</td>
             <td><strong>${valorMostrado}</strong> <span style="font-size:0.8rem">${iconoEstado}</span></td>
@@ -365,7 +382,6 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
     return { total: competidores.length, miPosicion: miPosicion };
 }
 
-// CAMINO 1: VER RANKING
 document.getElementById('btnVerLibre').addEventListener('click', async () => {
     const espElegida = especialidadLibreInput.value.trim();
     if (!espElegida || !datosResidencias[espElegida]) return mostrarError("Elegí o escribí una especialidad válida de la lista.");
@@ -392,9 +408,10 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
     }
 });
 
-// CAMINO 2: CARGAR PROMEDIO
+// Aceptar DNI al hacer clic
 document.getElementById('btnSiguiente').addEventListener('click', async () => {
-    const dniInput = document.getElementById('dniBuscador').value.trim();
+    let dniInput = document.getElementById('dniBuscador').value.trim();
+        
     if (!dniInput) return mostrarError("Debes ingresar un DNI.");
 
     mostrarCarga(true);
@@ -430,7 +447,6 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
         if (miRegistro.PROMEDIO) document.getElementById('promedio').value = miRegistro.PROMEDIO;
         
         if (miRegistro.ESPECIALIDAD) {
-            // Asigna el texto al input y dispara el evento para habilitar el selector de hospital
             especialidadInput.value = miRegistro.ESPECIALIDAD;
             especialidadInput.dispatchEvent(new Event('input'));
             
@@ -454,7 +470,6 @@ document.getElementById('btnVolver').addEventListener('click', () => {
     errorBox.style.display = 'none';
 });
 
-// GUARDAR DATOS Y NOTA FINAL
 document.getElementById('btnGuardar').addEventListener('click', async () => {
     const promedioTxt = document.getElementById('promedio').value;
     if (!promedioTxt) return mostrarError("Debes ingresar tu promedio.");
@@ -515,17 +530,10 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
     }
 });
 
-// ==========================================
-// FUNCIONES DE INTERFAZ: MODO OSCURO Y COMPARTIR
-// ==========================================
-
-// Modo Oscuro (Ahora manejado visualmente por CSS puro)
 const toggleThemeBtn = document.getElementById('toggleTheme');
-
 if (localStorage.getItem('theme') === 'dark') {
     document.body.classList.add('dark-mode');
 }
-
 toggleThemeBtn.addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
     if (document.body.classList.contains('dark-mode')) {
@@ -535,57 +543,41 @@ toggleThemeBtn.addEventListener('click', () => {
     }
 });
 
-// Botones de Compartir WhatsApp
 document.querySelectorAll('.btnCompartir').forEach(btn => {
     btn.addEventListener('click', () => {
         const urlPagina = window.location.href;
         let texto = `¡Mirá cómo va el ranking de las Residencias Médicas 2026! 🏥\n\nCargá tu promedio para ver tu posición real. Entrá acá:\n${urlPagina}`;
-        
         if (tituloTabla && tituloTabla.innerText.includes("Ranking:")) {
             const esp = tituloTabla.innerText.replace("Ranking: ", "");
             texto = `¡Mirá cómo va el corte en ${esp}! 🏥\n\nFijate tu posición en el ranking de las Residencias entrando acá:\n${urlPagina}`;
         }
-
         const linkWpp = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
         window.open(linkWpp, '_blank');
     });
 });
-// ==========================================
-// GRÁFICOS DINÁMICOS DE FLUJO EN TIEMPO REAL
-// ==========================================
+
 let chartGanancias = null;
 let chartPerdidas = null;
-
 function actualizarGraficosFlujo(registros) {
     const flujo = {};
-    
-    // 1. UNIFICAMOS ANTES DE LA MATEMÁTICA
     const limpiarEspecialidad = (texto) => {
         if (!texto) return "";
         let limpio = texto.split('(')[0].trim().toUpperCase();
-        
-        // Metemos todas las variantes en una sola "caja" para que la resta sea exacta
         if (limpio.includes("PSIQUIATR")) return "PSIQUIATRÍA";
         if (limpio.includes("PEDIATRÍA Y NEO")) return "PEDIATRÍA Y NEO";
         if (limpio.includes("ORTOPEDIA Y TRAUMA")) return "ORTOPEDIA Y TRAUMATOLOGÍA";
         if (limpio.includes("DIAGNÓSTICO")) return "DIAGNÓSTICO POR IMÁGENES";
         if (limpio.includes("CIRUGÍA CARDIOVASCULAR")) return "CIRUGÍA CARDIOVASCULAR";
-        
         return limpio;
     };
-
-    // 2. NOMBRES LINDOS PARA EL GRÁFICO
     const formatearNombre = (texto) => {
         if (texto === "PSIQUIATRÍA") return "Psiquiatría";
         if (texto === "PEDIATRÍA Y NEO") return "Pediatría y Neo";
         if (texto === "ORTOPEDIA Y TRAUMATOLOGÍA") return "Ortopedia y Traum";
         if (texto === "DIAGNÓSTICO POR IMÁGENES") return "Diagnóstico";
-        
-        // Capitaliza la primera letra (Ej: "Cirugía general")
         return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
     };
 
-    // Revisamos cada persona
     registros.forEach(r => {
         const dniStr = String(r.DNI).trim();
         const espOriginal = window.inscripcionesOriginales ? window.inscripcionesOriginales[dniStr] : null;
@@ -594,19 +586,15 @@ function actualizarGraficosFlujo(registros) {
         if (espOriginal && espActual) {
             const normOrig = limpiarEspecialidad(espOriginal);
             const normAct = limpiarEspecialidad(espActual);
-
-            // Acá ocurre la resta neta real
             if (normOrig !== normAct) {
-                flujo[normOrig] = (flujo[normOrig] || 0) - 1; // Pierde
-                flujo[normAct] = (flujo[normAct] || 0) + 1;   // Gana
+                flujo[normOrig] = (flujo[normOrig] || 0) - 1; 
+                flujo[normAct] = (flujo[normAct] || 0) + 1;   
             }
         }
     });
 
     let ganancias = [];
     let perdidas = [];
-    
-    // Separamos el flujo neto positivo del negativo
     for (const [esp, valor] of Object.entries(flujo)) {
         if (valor > 0) ganancias.push({ label: formatearNombre(esp), data: valor });
         else if (valor < 0) perdidas.push({ label: formatearNombre(esp), data: Math.abs(valor) });
@@ -615,7 +603,6 @@ function actualizarGraficosFlujo(registros) {
     ganancias.sort((a, b) => b.data - a.data);
     perdidas.sort((a, b) => b.data - a.data);
 
-    // 1. Dibujar Ganancias (Azul)
     const ctxG = document.getElementById('chartGanancias');
     if (chartGanancias) chartGanancias.destroy();
     if (ctxG && ganancias.length > 0) {
@@ -626,7 +613,6 @@ function actualizarGraficosFlujo(registros) {
         });
     }
 
-    // 2. Dibujar Pérdidas (Rojo)
     const ctxP = document.getElementById('chartPerdidas');
     if (chartPerdidas) chartPerdidas.destroy();
     if (ctxP && perdidas.length > 0) {
