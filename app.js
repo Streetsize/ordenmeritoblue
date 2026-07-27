@@ -241,15 +241,17 @@ window.onload = async function() {
 // NUEVO: SISTEMA DE CENSURA Y PRIVACIDAD
 // ==========================================
 function censurarDNI(registro) {
-    // Si el usuario pidió ocultarlo (y está guardado en Firebase), mostramos "Privado"
+    // Si el usuario pidió ocultarlo de forma completa, mostramos "Privado"
     if (registro.OCULTO === true) return "Privado";
     
     if (!registro.DNI) return "";
     let str = registro.DNI.toString();
-    if (str.length <= 4) return str;
     
-    // Si no está oculto, aplicamos la censura normal de 4 dígitos
-    return str.substring(0, str.length - 4) + "****";
+    // Si por algún error el DNI tiene 3 dígitos o menos, lo ocultamos por completo
+    if (str.length <= 3) return "***";
+    
+    // Reemplazamos los 3 primeros caracteres por "***" y concatenamos el resto
+    return "***" + str.substring(3);
 }
 // ==========================================
 // EVENTOS DEL APARTADO DE PRIVACIDAD (FIREBASE)
