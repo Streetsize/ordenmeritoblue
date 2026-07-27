@@ -168,6 +168,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- PASO 1: Inicio -->
         <div id="paso1">
             <p style="text-align: center; color: #777; margin-bottom: 2rem;">Mendoza</p>
+            <!-- AVISO DE NUEVO SIMULADOR -->
+            <div class="banner-nuevo" style="background: #e8f5e9; border: 1px solid #c3e6cb; padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px;">¡NUEVO!</span>
+                    <span class="banner-texto" style="color: #155724; font-size: 0.95rem;">Simulá en qué especialidades entrás directo.</span>
+                </div>
+                <a href="#tarjetaSimulador" style="background: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap;">Ir al Simulador 👇</a>
+            </div>
             
             <div class="card-opcion">
                 <h3>Soy Postulante: Cargar mi promedio</h3>
@@ -199,7 +207,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
 
             <!-- NUEVO: SIMULADOR DE INGRESO -->
-            <div class="card-opcion" style="border-left: 4px solid #28a745;">
+            <div id="tarjetaSimulador" class="card-opcion" style="border-left: 4px solid #28a745;" scroll-margin-top: 20px>
                 <h3 style="color: #28a745;">🔮 ¿A qué especialidad puedo ingresar?</h3>
                 <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
                     Simulá en qué especialidades de <strong>Primer Nivel</strong> entrarías directo en el cupo con tu puntaje actual.
