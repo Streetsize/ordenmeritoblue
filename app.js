@@ -244,6 +244,7 @@ window.onload = async function() {
             setTimeout(() => {
                 document.getElementById('barraProgreso').style.width = porcentaje + '%';
             }, 300);
+          actualizarGraficosFlujo(registrosBD);
         }
     } catch (error) {
         console.error("No se pudo cargar la estadística inicial:", error);
@@ -491,6 +492,7 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
         miRegistro.ESPECIALIDAD = especialidad;
         miRegistro.HTAL = hospital;
         miRegistro.NOTA_FINAL = parseFloat(notaFinal);
+        actualizarGraficosFlujo(registrosBD);
 
         let resumen = generarTabla(especialidad, miDNI);
 
