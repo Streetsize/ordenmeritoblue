@@ -675,3 +675,119 @@ function actualizarGraficosFlujo(registros) {
         });
     }
 }
+// ==========================================
+// SIMULADOR: ¿A QUÉ ESPECIALIDAD PUEDO INGRESAR?
+// ==========================================
+document.getElementById('btnSimular').addEventListener('click', () => {
+    const dniSim = document.getElementById('dniSimulador').value.trim();
+    const divRes = document.getElementById('resultadosSimulacion');
+
+    if (!dniSim) {
+        alert("Por favor, ingresá tu DNI para iniciar la simulación.");
+        return;
+    }
+
+    // Buscamos al usuario en la base local
+    const usuarioOriginal = registrosBD.find(r => r.DNI && r.DNI.toString() === dniSim);
+    
+    if (!usuarioOriginal) {
+        divRes.style.display = 'block';
+        divRes.innerHTML = `<div class="error sim-fail" style="display:block; background-color: #f8d7da; padding: 15px; border-radius: 4px; color: #721c24; border: 1px solid #f5c6cb;">DNI no encontrado en el padrón de examen.</div>`;
+        return;
+    }
+
+    // 1. VALIDACIÓN: ¿Tiene el promedio cargado?
+    const tienePromedio = usuarioOriginal.PROMEDIO && String(usuarioOriginal.PROMEDIO).trim() !== "EN" && String(usuarioOriginal.PROMEDIO).trim() !== "";
+
+    if (!tienePromedio) {
+        divRes.style.display = 'block';
+        divRes.innerHTML = `
+            <div class="sim-fail" style="background-color: #fff3f3; padding: 15px; border-radius: 4px; border: 1px solid #dc3545; color: #721c24; text-align: center;">
+                <strong>⚠️ Falta tu promedio</strong><br>
+                Todavía no cargaste tu promedio en el sistema. Para que la simulación sea exacta, primero tenés que cargar tus datos.
+                <button id="btnIrACargar" style="background-color: #0056b3; color: white; border: none; padding: 10px 15px; border-radius: 4px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%;">Ir a Cargar Promedio</button>
+            </div>
+        `;
+        
+        // Le damos funcionalidad al botón de emergencia para que le haga el trabajo fácil
+        document.getElementById('btnIrACargar').addEventListener('click', () => {
+            document.getElementById('dniBuscador').value = dniSim;
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Sube la pantalla
+            document.getElementById('btnSiguiente').click(); // Inicia la carga
+        });
+        
+        return; // Frenamos la simulación acá
+    }
+
+    // 2. CÁLCULO DE SIMULACIÓN (Si tiene promedio)
+    const miPuntaje = obtenerValorOrden(usuarioOriginal).toFixed(2);
+    const miPromedio = usuarioOriginal.PROMEDIO;
+    let resultados = [];
+
+    // Iteramos solo por las especialidades de Primer Nivel
+    for (const [esp, cupos] of Object.entries(cuposPorEspecialidad)) {
+        if (!esp.includes("(Primer nivel)")) continue;
+
+        let competidores = registrosBD.filter(r =>
+            coincideEspecialidad(r.ESPECIALIDAD, esp) && r.DNI.toString() !== dniSim
+        );
+
+        competidores = competidores.filter(p => parseFloat(p.NOTA) >= 50);
+        competidores.push(usuarioOriginal);
+        competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
+
+        const miPuesto = competidores.findIndex(c => c.DNI && c.DNI.toString() === dniSim) + 1;
+
+        if (cupos > 0 && miPuesto <= cupos) {
+            resultados.push({
+                especialidad: esp.replace(" (Primer nivel)", ""), 
+                posicion: miPuesto,
+                cupos: cupos
+            });
+        }
+    }
+
+    resultados.sort((a, b) => (b.cupos - b.posicion) - (a.cupos - a.posicion));
+
+    divRes.style.display = 'block';
+
+    if (resultados.length === 0) {
+        divRes.innerHTML = `
+            <div class="sim-fail" style="background-color: #fff3f3; padding: 15px; border-radius: 4px; border: 1px solid #dc3545; color: #721c24;">
+                <strong>Puntaje de simulación: ${miPuntaje} (Promedio: ${miPromedio})</strong><br>
+                Actualmente, con los promedios cargados por otros competidores, no entrarías directo en el cupo de ninguna especialidad de Primer Nivel. ¡Pero no te desanimes! Muchos postulantes no se presentan o cambian de opinión al adjudicar.
+            </div>
+        `;
+        return;
+    }
+
+    let htmlLista = `
+        <div class="sim-success" style="background-color: #d4edda; padding: 15px; border-radius: 4px; border: 1px solid #c3e6cb; color: #155724; margin-bottom: 10px;">
+            <strong>Puntaje: ${miPuntaje} (Promedio cargado: ${miPromedio})</strong><br>
+            Entrarías directo dentro del cupo en <strong>${resultados.length}</strong> especialidades:
+        </div>
+        <ul style="list-style-type: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 300px; overflow-y: auto;">
+    `;
+
+    resultados.forEach(r => {
+        htmlLista += `
+            <li class="sim-item" style="background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; color: #0056b3; font-size: 0.9rem;">${r.especialidad}</span>
+                <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; white-space: nowrap;">
+                    Puesto ${r.posicion} / ${r.cupos}
+                </span>
+            </li>
+        `;
+    });
+    htmlLista += `</ul>
+    <p style="font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;">*Basado en los puntajes cargados hasta hoy.</p>`;
+
+    divRes.innerHTML = htmlLista;
+});
+
+document.getElementById('dniSimulador').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnSimular').click();
+    }
+});
