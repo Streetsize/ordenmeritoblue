@@ -1664,7 +1664,7 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async (
         cajaEstado.style.color = '#721c24';
         cajaEstado.innerText = "❌ Hubo un error de conexión al enviar el comentario.";
     } finally {
-        btn.disabled.disabled = false;
+        btn.disabled = false;
         btn.innerText = "Enviar Comentario";
     }
 });
