@@ -883,9 +883,6 @@ let htmlLista = `
             <div style="font-size: 1.1rem; color: #555; margin-bottom: 12px;">
                 Mi puntaje definitivo es <strong>${miPuntaje}</strong>
             </div>
-            <div style="background-color: #28a745; color: white; padding: 10px 15px; border-radius: 8px; display: inline-block; font-size: 1.2rem; font-weight: bold; margin-bottom: 12px;">
-                ¡Entraría al cupo de ${resultados.length} especialidades! 🎉
-            </div>
         </div>
         
         <ul style="list-style-type: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 300px; overflow-y: auto;">
