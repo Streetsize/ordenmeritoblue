@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
@@ -465,6 +465,7 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
         registrosBD = Array.isArray(data) ? data : Object.values(data);
         
         generarTabla(espElegida, null);
+        registrarUso("VER_RANKING", "Visitante", espElegida);
         
         resultadoFinal.style.display = 'none';
         tituloTabla.innerText = `Ranking: ${espElegida}`;
@@ -571,6 +572,7 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
         updates[`/${indiceUsuarioActual}/NOTA_FINAL`] = parseFloat(notaFinal);
 
         await update(ref(db), updates);
+        registrarUso("CARGA_PROMEDIO", miDNI, especialidad);
 
         miRegistro.PROMEDIO = promedio;
         miRegistro.ESPECIALIDAD = especialidad;
@@ -703,6 +705,7 @@ document.getElementById('btnSimular').addEventListener('click', () => {
         alert("Por favor, ingresá tu DNI para iniciar la simulación.");
         return;
     }
+    registrarUso("USO_SIMULADOR", dniSim, "");
 
     // Buscamos al usuario en la base local
     const usuarioOriginal = registrosBD.find(r => r.DNI && r.DNI.toString() === dniSim);
@@ -1390,4 +1393,20 @@ if (btnToggleVista) {
             btnToggleVista.classList.add('btn-secondary'); // Vuelve al color original
         }
     });
+}
+// ==========================================
+// SISTEMA DE ESTADÍSTICAS Y TRACKING PRIVADO
+// ==========================================
+function registrarUso(accion, dniUsuario, detalles = "") {
+    try {
+        const logsRef = ref(db, 'estadisticas_uso');
+        push(logsRef, {
+            accion: accion,
+            dni: dniUsuario || "Visitante",
+            detalles: detalles,
+            fecha: new Date().toLocaleString('es-AR') // Guarda la fecha y hora de Argentina
+        });
+    } catch (error) {
+        console.error("Error registrando métrica en segundo plano");
+    }
 }
