@@ -843,11 +843,21 @@ document.getElementById('btnSimular').addEventListener('click', () => {
         return;
     }
 
-    let htmlLista = `
-        <div class="sim-success" style="background-color: #d4edda; padding: 15px; border-radius: 4px; border: 1px solid #c3e6cb; color: #155724; margin-bottom: 10px;">
-            <strong>Puntaje: ${miPuntaje} (Promedio cargado: ${miPromedio})</strong><br>
-            Entrarías directo dentro del cupo en <strong>${resultados.length}</strong> especialidades médicas:
+let htmlLista = `
+        <!-- ESTA ES LA CAJA QUE VA A SALIR EN LA FOTO -->
+        <div id="cajaResumenFoto" style="background-color: #f8f9fa; padding: 20px; border-radius: 12px; border: 2px solid #28a745; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 10px 0; color: #333; font-size: 1.3rem;">🏥 Ranking Residencias 2026</h3>
+            <div style="font-size: 1.1rem; color: #555; margin-bottom: 12px;">
+                Mi puntaje definitivo es <strong>${miPuntaje}</strong>
+            </div>
+            <div style="background-color: #28a745; color: white; padding: 10px 15px; border-radius: 8px; display: inline-block; font-size: 1.2rem; font-weight: bold; margin-bottom: 12px;">
+                ¡Entraría al cupo de ${resultados.length} especialidades! 🎉
+            </div>
+            <div style="font-size: 0.85rem; color: #888; font-weight: bold;">
+                Simulá tu puesto en https://streetsize.github.io/ordenmeritoblue
+            </div>
         </div>
+        
         <ul style="list-style-type: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 300px; overflow-y: auto;">
     `;
 
@@ -884,9 +894,10 @@ document.getElementById('btnSimular').addEventListener('click', () => {
                 btnIG.style.display = 'none';
                 
                 // 2. Sacamos la "foto" al contenedor de los resultados
-                const canvas = await html2canvas(divRes, {
-                    backgroundColor: '#ffffff', // Fondo blanco para que quede prolijo
-                    scale: 2 // Alta calidad para celulares
+            const cajaFoto = document.getElementById('cajaResumenFoto');
+                const canvas = await html2canvas(cajaFoto, {
+                    backgroundColor: '#ffffff', 
+                    scale: 3 // Subimos la escala a 3 para que el texto se vea súper nítido en IG
                 });
                 
                 // Volvemos a mostrar el botón
@@ -900,7 +911,7 @@ document.getElementById('btnSimular').addEventListener('click', () => {
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         await navigator.share({
                             title: 'Ranking Residencias 2026',
-                            text: '¡Mirá mi posición en el simulador de residencias médicas! 🏥 Entrá y fijate la tuya:',
+                            text: '¡Mirá mi posición en el simulador de residencias médicas! 🏥 Entrá y fijate la tuya: https://streetsize.github.io/ordenmeritoblue',
                             files: [file]
                         });
                     } else {
