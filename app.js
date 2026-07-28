@@ -333,7 +333,7 @@ document.getElementById('btnOcultarDNI').addEventListener('click', async () => {
         if (indiceOcultar !== -1) {
             // Lo actualizamos en Firebase para que aplique a TODOS los usuarios instantáneamente
             const updates = {};
-            updates[`/postulantes/${indiceOcultar}/OCULTO`] = true;
+            updates[`postulantes/${indiceOcultar}/OCULTO`] = true;
             await update(ref(db), updates);
             localStorage.setItem('miDniValidado', miDNI);
 
@@ -600,10 +600,10 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
         const notaFinal = (puntosExamen + puntosPromedio + puntosMendoza).toFixed(2);
 
         const updates = {};
-        updates[`/postulantes/${indiceUsuarioActual}/PROMEDIO`] = promedio;
-        updates[`/postulantes/${indiceUsuarioActual}/ESPECIALIDAD`] = especialidad;
-        updates[`/postulantes/${indiceUsuarioActual}/HTAL`] = hospital;
-        updates[`/postulantes/${indiceUsuarioActual}/NOTA_FINAL`] = parseFloat(notaFinal);
+        updates[`postulantes/${indiceUsuarioActual}/PROMEDIO`] = promedio;
+        updates[`postulantes/${indiceUsuarioActual}/ESPECIALIDAD`] = especialidad;
+        updates[`postulantes/${indiceUsuarioActual}/HTAL`] = hospital;
+        updates[`postulantes/${indiceUsuarioActual}/NOTA_FINAL`] = parseFloat(notaFinal);
 
         await update(ref(db), updates);
         registrarUso("CARGA_PROMEDIO", miDNI, especialidad);
@@ -801,8 +801,8 @@ document.getElementById('btnSimular').addEventListener('click', () => {
                 
                 // Actualizamos Firebase
                 const updates = {};
-                updates[`/postulantes/${indiceActualizar}/PROMEDIO`] = promedio;
-                updates[`/postulantes/${indiceActualizar}/NOTA_FINAL`] = parseFloat(notaFinal.toFixed(2));
+                updates[`postulantes/${indiceActualizar}/PROMEDIO`] = promedio;
+                updates[`postulantes/${indiceActualizar}/NOTA_FINAL`] = parseFloat(notaFinal.toFixed(2));
                 
                 await update(ref(db), updates);
                 
