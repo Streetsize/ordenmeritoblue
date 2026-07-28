@@ -1346,4 +1346,33 @@ function coincideHospital(hospDB, hospSeleccionado) {
     const norm = (s) => s.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     return norm(hospDB).includes(norm(hospSeleccionado)) || norm(hospSeleccionado).includes(norm(hospDB));
 }
+// ==========================================
+// LÓGICA DEL BOTÓN PARA CAMBIAR DE VISTA (GENERAL / HOSPITALES)
+// ==========================================
+const vistaGeneral = document.getElementById('vistaGeneral');
+const vistaHospitales = document.getElementById('vistaHospitales');
+const btnToggleVista = document.getElementById('btnToggleVista');
 
+if (btnToggleVista) {
+    btnToggleVista.addEventListener('click', () => {
+        if (vistaGeneral.style.display !== 'none') {
+            // Ocultar General -> Mostrar Hospitales
+            vistaGeneral.style.display = 'none';
+            vistaHospitales.style.display = 'block';
+            
+            // Cambiar aspecto del botón
+            btnToggleVista.innerHTML = "📋 Volver al Ranking General";
+            btnToggleVista.classList.remove('btn-secondary');
+            btnToggleVista.classList.add('btn-primary'); // Se pone azul
+        } else {
+            // Ocultar Hospitales -> Mostrar General
+            vistaGeneral.style.display = 'block';
+            vistaHospitales.style.display = 'none';
+            
+            // Cambiar aspecto del botón
+            btnToggleVista.innerHTML = "🏥 Ver por Hospitales";
+            btnToggleVista.classList.remove('btn-primary');
+            btnToggleVista.classList.add('btn-secondary'); // Vuelve al color original
+        }
+    });
+}
