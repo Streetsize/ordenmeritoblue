@@ -879,7 +879,6 @@ const cuposPorHospital = {
     "ANESTESIOLOGÍA (Primer nivel)": {
         "Hospital Central": 4,
         "Hospital Luis Lagomaggiore": 2,
-        "Hospital Teodoro Schestakow": 2
     },
     "AUDIOLOGÍA (Primer nivel)": {
         "Xeltahuina - OSEP": 2
