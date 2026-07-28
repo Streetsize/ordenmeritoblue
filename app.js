@@ -862,7 +862,13 @@ document.getElementById('btnSimular').addEventListener('click', () => {
         `;
     });
     htmlLista += `</ul>
-    <p style="font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;">*Basado en los puntajes cargados hasta hoy.</p>`;
+    <p style="font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;">*Basado en los puntajes cargados hasta hoy.</p>
+    
+    <!-- NUEVO BOTÓN DE COMPARTIR IMAGEN -->
+    <button id="btnCompartirIG" style="width: 100%; background: #E1306C; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        📸 Compartir mi resultado
+    </button>
+    `;
 
     divRes.innerHTML = htmlLista;
 });
