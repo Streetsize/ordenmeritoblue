@@ -414,6 +414,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="loading" class="loader">Conectando con la base de datos...</div>
         <div id="errorBox" class="error"></div>
     </div>
+    <!-- APARTADO DE COMENTARIOS / SUGERENCIAS -->
+    <div class="card-opcion" style="margin-top: 30px; padding: 1.5rem; background-color: #e8f4fd; border: 1px solid #b8daff;">
+        <h4 style="color: #004085; margin-top: 0; display: flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Dejanos tu Comentario o Sugerencia
+        </h4>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <input type="text" id="dniComentario" placeholder="Ingresá tu DNI (sin puntos)" pattern="[0-9]+" style="padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
+            <textarea id="textoComentario" rows="3" placeholder="Escribe tu mensaje aquí..." style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; resize: vertical;"></textarea>
+            <button id="btnEnviarComentario" style="width: auto; padding: 0.75rem 1.5rem; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; align-self: flex-end; margin: 0;">Enviar Comentario</button>
+        </div>
+        <div id="mensajeComentarioEstado" style="display: none; margin-top: 10px; font-size: 0.9rem; font-weight: bold;"></div>
+    </div>
     <!-- APARTADO DE PRIVACIDAD -->
         <div class="card-opcion" style="margin-top: 30px; padding: 1.5rem; background-color: #fff9e6; border: 1px solid #ffeeba;">
             <h4 style="color: #856404; margin-top: 0; display: flex; align-items: center; gap: 8px;">
