@@ -430,8 +430,9 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
         `;
         tbody.appendChild(tr);
     });
-
+    generarDesglosPorHospitales(especialidadABuscar, dniSeleccionado);
     return { total: competidores.length, miPosicion: miPosicion };
+    
 }
 
 document.getElementById('btnVerLibre').addEventListener('click', async () => {
@@ -851,3 +852,498 @@ document.getElementById('dniSimulador').addEventListener('keypress', function (e
         document.getElementById('btnSimular').click();
     }
 });
+// ==========================================
+// DICCIONARIO DE CUPOS POR HOSPITAL Y ESPECIALIDAD
+// ==========================================
+const cuposPorHospital = {
+    "ANATOMÍA PATOLÓGICA (Primer nivel)": {
+        "Hospital Central": 1,
+        "Hospital Luis Lagomaggiore": 3
+    },
+    "ANESTESIOLOGÍA (Primer nivel)": {
+        "Hospital Central": 4,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Teodoro Schestakow": 2
+    },
+    "AUDIOLOGÍA (Primer nivel)": {
+        "Xeltahuina - OSEP": 2
+    },
+    "BIOQUÍMICA CLÍNICA (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 1,
+        "Hospital Central": 2,
+        "Hospital Diego Paroissien": 2,
+        "Hospital Infantil Humberto Notti": 2,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Militar": 1
+    },
+    "CARDIOLOGÍA PEDIÁTRICA (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "CARDIOLOGÍA (Primer nivel)": {
+        "Clínica de Cuyo": 1,
+        "Clínica Pelegrina (Usar Clínica Santa Clara)": 2,
+        "Hospital Central": 3,
+        "Hospital Español": 2,
+        "Hospital Italiano": 3,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Nuestra Señora del Carmen OSEP": 2,
+        "Hospital Teodoro Schestakow": 3
+    },
+    "CIRUGÍA CARDIOVASCULAR (Primer nivel)": {
+        "Hospital Central": 1,
+        "Hospital Italiano": 1
+    },
+    "CIRUGÍA CARDIOVASCULAR (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Español": 1
+    },
+    "CIRUGÍA ESTÉTICA, PLÁSTICA Y REPARADORA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Italiano": 1,
+        "Hospital Luis Lagomaggiore": 1
+    },
+    "CIRUGÍA GENERAL (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 2,
+        "Hospital Antonio Scaravelli": 1,
+        "Hospital Central": 3,
+        "Hospital Enfermeros Argentinos": 2,
+        "Hospital Español": 2,
+        "Hospital Italiano": 2,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Militar": 2
+    },
+    "CIRUGÍA PEDIÁTRICA (Primer nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "CIRUGÍA VASCULAR PERIFÉRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1
+    },
+    "CLÍNICA MÉDICA (Primer nivel)": {
+        "Clínica Pelegrina (Usar Clínica Santa Clara)": 2,
+        "Clínica Santa Maria Delta": 3,
+        "Hospital Alfredo Perrupato": 3,
+        "Hospital Antonio Scaravelli": 2,
+        "Hospital Carlos Saporiti": 2,
+        "Hospital Central": 9,
+        "Hospital Diego Paroissien": 3,
+        "Hospital Español": 3,
+        "Hospital Italiano": 3,
+        "Hospital Luis Lagomaggiore": 8,
+        "Hospital Militar": 2,
+        "Hospital Nuestra Señora del Carmen OSEP": 10,
+        "Hospital Santa Isabel de Hungria": 2,
+        "Hospital Teodoro Schestakow": 5
+    },
+    "CRECIMIENTO Y DESARROLLO (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "DERMATOLOGÍA (Primer nivel)": {
+        "Hospital Central": 1,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Nuestra Señora del Carmen OSEP": 1
+    },
+    "DIAGNÓSTICO POR IMÁGENES (Primer nivel)": {
+        "Fundación Escuela de Medicina Nuclear (FUESMEN)": 2,
+        "Hospital Central": 3,
+        "Hospital Español": 3,
+        "Hospital Italiano": 2,
+        "Hospital Nuestra Señora del Carmen OSEP": 2,
+        "Medicina por Imágenes S.A.": 2
+    },
+    "DIAGNÓSTICO POR IMÁGENES Y MEDICINA NUCLEAR (ARTICULADA) (Primer nivel)": {
+        "Fundación Escuela de Medicina Nuclear (FUESMEN)": 2
+    },
+    "EMERGENTOLOGÍA (Primer nivel)": {
+        "Hospital Central": 4,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Teodoro Schestakow": 2
+    },
+    "ENDOCRINOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "ENDOCRINOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1
+    },
+    "ENDODONCIA (Primer nivel)": {
+        "Hospital Luis Lagomaggiore": 1
+    },
+    "ENFERMERÍA COMUNITARIA (Primer nivel)": {
+        "Hospital Carlos Saporiti": 2,
+        "Hospital Enfermeros Argentinos": 5
+    },
+    "ENFERMERÍA EN CONTROL DE INFECCIONES (Primer nivel)": {
+        "Hospital Central": 1,
+        "Hospital Luis Lagomaggiore": 1
+    },
+    "ENFERMERÍA EN CUIDADOS CRÍTICOS (Primer nivel)": {
+        "Hospital Militar": 2,
+        "Hospital Teodoro Schestakow": 4
+    },
+    "ENFERMERÍA EN SALUD MENTAL (Primer nivel)": {
+        "Hospital Carlos Pereyra": 3
+    },
+    "ENFERMERÍA GENERALISTA MÉDICO QUIRÚRGICA (Primer nivel)": {
+        "Hospital Central": 4,
+        "Hospital Teodoro Schestakow": 2
+    },
+    "ENFERMERÍA NEONATAL (Primer nivel)": {
+        "Hospital Infantil Humberto Notti": 4
+    },
+    "ENFERMERÍA PEDIÁTRICA (Primer nivel)": {
+        "Hospital Infantil Humberto Notti": 4
+    },
+    "FARMACIA HOSPITALARIA (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 1,
+        "Hospital Central": 2,
+        "Hospital Infantil Humberto Notti": 4
+    },
+    "FISIATRÍA (Primer nivel)": {
+        "Fundación San Andres": 3,
+        "Hospital José Nestor Lencinas": 2
+    },
+    "GASTROENTEROLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1,
+        "Hospital Luis Lagomaggiore": 1,
+        "Hospital Nuestra Señora del Carmen OSEP": 1,
+        "Hospital Teodoro Schestakow": 1
+    },
+    "GERIATRÍA Y GERONTOLOGÍA (Primer nivel)": {
+        "Hospital José Nestor Lencinas": 2
+    },
+    "GINECOLOGÍA INFANTO JUVENIL (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "HEMATOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "HEMATOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1,
+        "Hospital Nuestra Señora del Carmen OSEP": 1
+    },
+    "HEMOTERAPIA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1
+    },
+    "INFECTOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "INFECTOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1,
+        "Hospital Luis Lagomaggiore": 1
+    },
+    "KINESIOLOGÍA EN FISIATRÍA (Primer nivel)": {
+        "Hospital José Nestor Lencinas": 2
+    },
+    "KINESIOLOGÍA EN NEUROLOGÍA (Primer nivel)": {
+        "Hospital Central": 2
+    },
+    "KINESIOLOGÍA EN RESPIRATORIO DE ADULTOS (Primer nivel)": {
+        "Fundación San Andres": 3,
+        "Hospital Central": 2
+    },
+    "KINESIOLOGÍA GENERAL (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 2,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Teodoro Schestakow": 2
+    },
+    "KINESIOLOGÍA PEDIÁTRICA (Primer nivel)": {
+        "Hospital Infantil Humberto Notti": 2
+    },
+    "MEDICINA DE FAMILIA (Primer nivel)": {
+        "Área Departamental de Salud de Godoy Cruz": 2,
+        "Área Departamental de Salud de Maipú": 4,
+        "Hospital Carlos Saporiti": 4,
+        "Hospital Domingo Sícoli": 4,
+        "Hospital Enfermeros Argentinos": 3,
+        "Xeltahuina - OSEP": 4
+    },
+    "NEFROLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "NEFROLOGÍA (Primer nivel)": {
+        "Hospital Central": 2
+    },
+    "NEONATOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Diego Paroissien": 2,
+        "Hospital Infantil Humberto Notti": 2,
+        "Hospital Luis Lagomaggiore": 1,
+        "Hospital Teodoro Schestakow": 1
+    },
+    "NEUMONOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 2
+    },
+    "NEUMONOLOGÍA (Primer nivel)": {
+        "Hospital Luis Lagomaggiore": 2
+    },
+    "NEUMONOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1
+    },
+    "NEUROCIRUGÍA (Primer nivel)": {
+        "Hospital Central": 1
+    },
+    "NEUROLOGÍA (Primer nivel)": {
+        "Hospital Luis Lagomaggiore": 2
+    },
+    "NEUROLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Nuestra Señora del Carmen OSEP": 2
+    },
+    "NUTRICIÓN Y ALIMENTACIÓN DEL ADULTO (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 1,
+        "Hospital Central": 2,
+        "Hospital Luis Lagomaggiore": 1,
+        "Hospital Teodoro Schestakow": 1
+    },
+    "NUTRICIÓN Y ALIMENTACIÓN INFANTOJUVENIL (Primer nivel)": {
+        "Hospital Infantil Humberto Notti": 2
+    },
+    "ODONTOLOGÍA DE ALTA COMPLEJIDAD (Primer nivel)": {
+        "Hospital Central": 2
+    },
+    "ODONTOLOGÍA PREVENTIVA Y SOCIAL (Primer nivel)": {
+        "Centro Integral Odontológico - OSEP": 1
+    },
+    "ODONTOPEDIATRÍA (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 1,
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "OFTALMOLOGÍA (Primer nivel)": {
+        "Clínica de Ojos Dra. Mulet": 2,
+        "Hospital Central": 3,
+        "Instituto CAIMARI S.A.": 3,
+        "Instituto Zaldivar": 1
+    },
+    "ONCOLOGÍA CLÍNICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Fundación Escuela de Medicina Nuclear (FUESMEN)": 2
+    },
+    "ONCOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "ORTOPEDIA Y TRAUMATOLOGÍA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 2
+    },
+    "ORTOPEDIA Y TRAUMATOLOGÍA (Primer nivel)": {
+        "Clínica Francesa (Guaymallen)": 2,
+        "Hospital Alfredo Perrupato": 2,
+        "Hospital Central": 3,
+        "Hospital Español": 1,
+        "Hospital Luis Lagomaggiore": 2,
+        "Hospital Militar": 1
+    },
+    "OTORRINOLARINGOLOGÍA (Primer nivel)": {
+        "Clínica Godoy Cruz": 1,
+        "Hospital Central": 1,
+        "Hospital Luis Lagomaggiore": 1
+    },
+    "PEDIATRÍA (Primer nivel)": {
+        "Clínica Santa María Delta": 3,
+        "Hospital Alfredo Perrupato": 4,
+        "Hospital Carlos Saporiti": 1,
+        "Hospital Diego Paroissien": 4,
+        "Hospital Dr. Ramón Carrillo": 3,
+        "Hospital Infantil Humberto Notti": 10,
+        "Hospital Pediátrico Alexander Fleming OSEP": 4,
+        "Hospital Teodoro Schestakow": 5
+    },
+    "PEDIATRÍA Y NEONATOLOGÍA (Ambos niveles)": {
+        "Hospital Diego Paroissien": 2,
+        "Hospital Infantil Humberto Notti": 5,
+        "Hospital Luis Lagomaggiore": 5
+    },
+    "PEDIATRÍA Y TERAPIA INTENSIVA (Ambos niveles)": {
+        "Hospital Infantil Humberto Notti": 5
+    },
+    "PSICOLOGÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (RISAM) (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 1,
+        "Hospital Carlos Pereyra": 3,
+        "Hospital Carlos Saporiti": 3,
+        "Hospital Central": 3,
+        "Hospital El Sauce": 3,
+        "Hospital Luis Lagomaggiore": 3,
+        "Hospital Nuestra Señora del Carmen OSEP": 2,
+        "Hospital Teodoro Schestakow": 3,
+        "Hospital Victorino Tagarelli": 1
+    },
+    "PSICOLOGÍA INFANTOJUVENIL (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Dirección de Salud Mental y Adicciones": 4,
+        "Hospital Pediátrico Alexander Fleming OSEP": 1
+    },
+    "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 1,
+        "Hospital Carlos Pereyra": 5,
+        "Hospital Carlos Saporiti": 3,
+        "Hospital Central": 3,
+        "Hospital El Sauce": 5,
+        "Hospital Luis Lagomaggiore": 3,
+        "Hospital Nuestra Señora del Carmen OSEP": 2,
+        "Hospital Teodoro Schestakow": 3,
+        "Hospital Victorino Tagarelli": 1
+    },
+    "PSIQUIATRIA EN SALUD MENTAL COMUNITARIA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Dirección de Salud Mental y Adicciones": 1
+    },
+    "PSIQUIATRÍA INFANTOJUVENIL (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Dirección de Salud Mental y Adicciones": 6,
+        "Hospital Pediátrico Alexander Fleming OSEP": 1
+    },
+    "RADIOTERAPIA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Fundación Escuela de Medicina Nuclear (FUESMEN)": 2
+    },
+    "REUMATOLOGÍA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Nuestra Señora del Carmen OSEP": 1
+    },
+    "TERAPIA INTENSIVA PEDIÁTRICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Infantil Humberto Notti": 1
+    },
+    "TERAPIA INTENSIVA (Primer nivel)": {
+        "Hospital Carlos Saporiti": 1,
+        "Hospital Central": 8,
+        "Hospital Español": 2,
+        "Hospital Luis Lagomaggiore": 4,
+        "Hospital Nuestra Señora del Carmen OSEP": 2,
+        "Hospital Teodoro Schestakow": 2
+    },
+    "TOCOGINECOLOGÍA (Primer nivel)": {
+        "Hospital Alfredo Perrupato": 4,
+        "Hospital Diego Paroissien": 4,
+        "Hospital Español": 3,
+        "Hospital Italiano": 2,
+        "Hospital Luis Lagomaggiore": 4,
+        "Hospital Obstetrico Virgen de la Misericordia OSEP": 2,
+        "Hospital Teodoro Schestakow": 4
+    },
+    "TRABAJO SOCIAL EN SALUD MENTAL COMUNITARIA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Dirección de Salud Mental y Adicciones": 1
+    },
+    "TRABAJO SOCIAL EN SALUD MENTAL INFANTO JUVENIL (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Dirección de Salud Mental y Adicciones": 4,
+        "Hospital Pediátrico Alexander Fleming OSEP": 1
+    },
+    "TRABAJO SOCIAL EN SALUD PÚBLICA (Primer nivel)": {
+        "Hospital Luis Lagomaggiore": 2
+    },
+    "TRASPLANTE HEPATICO Y CIRUGIA HEPATO BILIO PANCREATICA (Segundo nivel)": {
+        "Hospital Central": 1
+    },
+    "TRASPLANTOLOGÍA CLÍNICA INTRATORÁCICA (SEGUNDO NIVEL) (Segundo nivel)": {
+        "Hospital Central": 1
+    },
+    "UROLOGÍA (Primer nivel)": {
+        "Hospital Central": 2,
+        "Hospital Español": 1,
+        "Uroclínica": 2
+    }
+};
+
+// ==========================================
+// FUNCIÓN PARA GENERAR DESGLOSE POR HOSPITALES
+// ==========================================
+function generarDesglosPorHospitales(especialidadABuscar, dniSeleccionado = null) {
+    const contenedor = document.getElementById('contenedorHospitales');
+    contenedor.innerHTML = '';
+
+    const cuposHospEsp = cuposPorHospital[especialidadABuscar];
+    if (!cuposHospEsp) {
+        contenedor.innerHTML = '<p style="color: #666; font-style: italic;">No hay desglose de cupos por hospital disponible para esta especialidad.</p>';
+        return;
+    }
+
+    // Filtramos competidores de la especialidad
+    let competidores = registrosBD.filter(p => coincideEspecialidad(p.ESPECIALIDAD, especialidadABuscar));
+    const NOTA_MINIMA_VISIBLE = 50; 
+    competidores = competidores.filter(p => {
+        const notaExamen = parseFloat(p.NOTA) || 0;
+        return notaExamen >= NOTA_MINIMA_VISIBLE || (dniSeleccionado && p.DNI.toString() === dniSeleccionado);
+    });
+
+    // Iteramos por cada hospital que ofrece la especialidad
+    for (const [hospitalNombre, cuposHospital] of Object.entries(cuposHospEsp)) {
+        // Filtramos postulantes que eligieron este hospital específico
+        let inscriptosHosp = competidores.filter(c => c.HTAL && coincideHospital(c.HTAL, hospitalNombre));
+
+        // Ordenamos de mayor a menor según puntaje
+        inscriptosHosp.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
+
+        // Creamos la card / sección para este hospital
+        const cardHosp = document.createElement('div');
+        cardHosp.className = 'card-opcion';
+        cardHosp.style.marginBottom = '1.5rem';
+        cardHosp.style.padding = '1.5rem';
+
+        let htmlHosp = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                <h4 style="margin: 0; color: #0056b3; font-size: 1.1rem;">🏥 ${hospitalNombre}</h4>
+                <span style="background: #17a2b8; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
+                    Cupos: ${cuposHospital} | Inscriptos: ${inscriptosHosp.length}
+                </span>
+            </div>
+        `;
+
+        if (inscriptosHosp.length === 0) {
+            htmlHosp += `<p style="font-size: 0.9rem; color: #777; font-style: italic; margin: 0;">Todavía no hay postulantes inscriptos con este hospital seleccionado.</p>`;
+        } else {
+            htmlHosp += `
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pos.</th>
+                                <th>DNI</th>
+                                <th>Examen</th>
+                                <th>Promedio</th>
+                                <th>Nota Final</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            inscriptosHosp.forEach((c, index) => {
+                const puesto = index + 1;
+                let claseFila = '';
+                
+                if (dniSeleccionado && c.DNI.toString() === dniSeleccionado) {
+                    claseFila = 'fila-usuario';
+                }
+                if (cuposHospital > 0 && puesto > cuposHospital) {
+                    claseFila = 'fila-afuera';
+                }
+                if (cuposHospital > 0 && puesto === cuposHospital + 1) {
+                    claseFila += ' fila-corte';
+                }
+
+                let valorMostrado = obtenerValorOrden(c).toFixed(2);
+                let iconoEstado = c.NOTA_FINAL ? '✅' : '⏳ (Prov.)';
+                let valPromedio = c.PROMEDIO ? c.PROMEDIO : 'Est. (8.0)';
+                let dniMostrado = censurarDNI(c);
+
+                let contenidoPos = `<strong>${puesto}</strong>`;
+                if (cuposHospital > 0 && puesto === cuposHospital + 1) {
+                    contenidoPos += `<span class="etiqueta-corte">Límite Cupos</span>`;
+                }
+
+                htmlHosp += `
+                    <tr class="${claseFila}">
+                        <td>${contenidoPos}</td>
+                        <td>${dniMostrado}</td>
+                        <td>${c.NOTA}</td>
+                        <td>${valPromedio}</td>
+                        <td><strong>${valorMostrado}</strong> <span style="font-size:0.8rem">${iconoEstado}</span></td>
+                    </tr>
+                `;
+            });
+
+            htmlHosp += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        cardHosp.innerHTML = htmlHosp;
+        contenedor.appendChild(cardHosp);
+    }
+}
+
+// Función auxiliar para matchear nombres de hospitales con flexibilidad
+function coincideHospital(hospDB, hospSeleccionado) {
+    if (!hospDB || !hospSeleccionado) return false;
+    const norm = (s) => s.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    return norm(hospDB).includes(norm(hospSeleccionado)) || norm(hospSeleccionado).includes(norm(hospDB));
+}
+
