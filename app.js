@@ -1598,7 +1598,7 @@ function registrarUso(accion, dniUsuario, detalles = "") {
 // ==========================================
 // SISTEMA DE COMENTARIOS CON VALIDACIÓN DE DNI
 // ==========================================
-import { push, set, ref as dbRef } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { set, ref as dbRef } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 document.getElementById('btnEnviarComentario').addEventListener('click', async () => {
     const dniInput = document.getElementById('dniComentario').value.trim();
