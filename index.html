@@ -104,6 +104,25 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .progress-text { text-align: center; margin-bottom: 0.5rem; font-size: 0.95rem; color: #555; }
         .progress-bg { background: #e9ecef; border-radius: 10px; height: 12px; overflow: hidden; width: 100%; }
         .progress-bar { background: #17a2b8; width: 0%; height: 100%; transition: width 1.5s ease-in-out; }
+
+        /* LÍNEA DE OBJETIVO (80%) */
+        .progress-goal-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 80%;
+            width: 3px;
+            background-color: #dc3545; /* Línea roja destacada */
+            z-index: 5;
+        }
+        .progress-bg { 
+            position: relative; /* Necesario para que la línea se posicione bien adentro */
+            background: #e9ecef; 
+            border-radius: 10px; 
+            height: 12px; 
+            overflow: hidden; 
+            width: 100%; 
+        }
         
         /* ESTILOS DE LOS BOXES DE ESTADISTICA */
         .stat-box { background-color: #fff; }
@@ -197,13 +216,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
 
             <!-- Barra de Progreso de Participación -->
-            <div class="progress-wrapper">
-                <p class="progress-text">
-                    📊 Nivel de participación: <strong><span id="textoPorcentaje">...</span>%</strong> de los promedios ya fueron cargados
+                <div class="progress-wrapper">
+                <p class="progress-text" style="margin-bottom: 8px;">
+                    📊 Participación actual: <strong><span id="textoPorcentaje">...</span>%</strong> de los promedios cargados
                 </p>
+                
+                <!-- Contenedor de la barra con la línea del 80% -->
                 <div class="progress-bg">
+                    <div class="progress-goal-line" title="Objetivo: 80% (Muestra confiable)"></div>
                     <div id="barraProgreso" class="progress-bar"></div>
                 </div>
+                
+                <!-- Explicación estratégica para incentivar la difusión -->
+                <p style="font-size: 0.8rem; color: #666; text-align: center; margin-top: 6px;">
+                    <strong>Meta de confiabilidad (80%):</strong> Necesitamos alcanzar esta marca para que las proyecciones de corte sean estadísticamente más confiables.
+                </p>
             </div>
             <div style="height: 40px; width: 100%; clear: both;"></div>
             <!-- NUEVO: SIMULADOR DE INGRESO -->
