@@ -232,7 +232,7 @@ window.onload = async function() {
     try {
         const cacheKey = 'padronResidencias_v1';
         const cacheTimeKey = 'tiempoDescarga_v1';
-        const tiempoCacheMinutos = 30; // 30 minutos de vida para el caché
+        const tiempoCacheMinutos = 10; // 30 minutos de vida para el caché
 
         let data = null;
         const now = new Date().getTime();
