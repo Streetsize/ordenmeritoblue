@@ -746,7 +746,6 @@ document.getElementById('btnSimular').addEventListener('click', () => {
                 let indiceActualizar = llavesBD[registrosBD.indexOf(usuarioOriginal)];
                 
                 // Actualizamos Firebase
-                import { update, ref } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
                 const updates = {};
                 updates[`/${indiceActualizar}/PROMEDIO`] = promedio;
                 updates[`/${indiceActualizar}/NOTA_FINAL`] = parseFloat(notaFinal.toFixed(2));
