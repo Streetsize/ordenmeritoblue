@@ -853,9 +853,6 @@ let htmlLista = `
             <div style="background-color: #28a745; color: white; padding: 10px 15px; border-radius: 8px; display: inline-block; font-size: 1.2rem; font-weight: bold; margin-bottom: 12px;">
                 ¡Entraría al cupo de ${resultados.length} especialidades! 🎉
             </div>
-            <div style="font-size: 0.85rem; color: #888; font-weight: bold;">
-                Simulá tu puesto en https://streetsize.github.io/ordenmeritoblue
-            </div>
         </div>
         
         <ul style="list-style-type: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 300px; overflow-y: auto;">
