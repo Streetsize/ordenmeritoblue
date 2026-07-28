@@ -407,7 +407,8 @@ function coincideEspecialidad(espDB, espSeleccionada) {
     const dbLimpia = normalizar(espDB);
     const selectLimpia = normalizar(espSeleccionada.split("(")[0]);
     
-    return dbLimpia.includes(selectLimpia) || selectLimpia.includes(dbLimpia);
+    // Comparamos si son exactamente iguales o si el nombre limpio empieza con la selección exacta seguida de un espacio
+    return dbLimpia === selectLimpia || dbLimpia.startsWith(selectLimpia + " ");
 }
 
 function obtenerValorOrden(registro) {
