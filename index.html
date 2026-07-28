@@ -338,38 +338,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <button id="btnVolver" class="btn-outline">Cancelar y volver atrás</button>
         </div>
 
-        <!-- PASO 3: Resultados y Tabla -->
+<!-- PASO 3: Resultados y Tabla -->
         <div id="paso3">
-            <div id="resultadoFinal" class="success" style="display: none;"></div>
+            <div id="resultadoFinal" class="success" style="display: none; margin-bottom: 1rem;"></div>
             
-            <h3 id="tituloTabla" style="margin-top: 2rem; color: #0056b3; border-bottom: 2px solid #ccc; padding-bottom: 5px;">Comparativa</h3>
-            
-            <div class="table-responsive">
-                <table id="tablaCompetidores">
-                    <thead>
-                        <tr>
-                            <th>Pos.</th>
-                            <th>DNI</th>
-                            <th>Examen</th>
-                            <th>Promedio</th>
-                            <th>Nota Final</th>
-                            <th>Hospital</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Se llena con JS -->
-                    </tbody>
-                </table>
+            <!-- ENCABEZADO CON TÍTULO Y BOTÓN TOGGLE -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-top: 1rem; flex-wrap: wrap; gap: 10px;">
+                <h3 id="tituloTabla" style="color: #0056b3; margin: 0;">Comparativa General</h3>
+                <button id="btnToggleVista" class="btn-secondary" style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px;">🏥 Ver por Hospitales</button>
             </div>
-            <div class="leyenda">✅ Datos confirmados | ⏳ Puntaje provisorio (solo base examen)</div>
             
-            <!-- NUEVA SECCIÓN: DESGLOSE POR HOSPITALES Y CUPOS -->
-            <div id="seccionHospitales" style="margin-top: 3rem;">
-                <h3 style="color: #0056b3; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-bottom: 1.5rem;">🏥 Desglose por Hospitales y Cupos</h3>
+            <!-- VISTA 1: RANKING GENERAL -->
+            <div id="vistaGeneral" style="margin-top: 1rem;">
+                <div class="table-responsive">
+                    <table id="tablaCompetidores">
+                        <thead>
+                            <tr>
+                                <th>Pos.</th>
+                                <th>DNI</th>
+                                <th>Examen</th>
+                                <th>Promedio</th>
+                                <th>Nota Final</th>
+                                <th>Hospital</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena con JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="leyenda">✅ Datos confirmados | ⏳ Puntaje provisorio (solo base examen)</div>
+            </div>
+
+            <!-- VISTA 2: DESGLOSE POR HOSPITALES (Oculta por defecto) -->
+            <div id="vistaHospitales" style="display: none; margin-top: 1.5rem;">
                 <div id="contenedorHospitales" style="display: flex; flex-direction: column; gap: 2rem;"></div>
             </div>
             
-            <button onclick="location.reload()" style="background-color: #28a745; margin-top: 1.5rem;" class="btn-primary">🏠 Volver al Inicio</button>
+            <button onclick="location.reload()" style="background-color: #28a745; margin-top: 2rem;" class="btn-primary">🏠 Volver al Inicio</button>
         </div>
             
 
