@@ -871,6 +871,67 @@ document.getElementById('btnSimular').addEventListener('click', () => {
     `;
 
     divRes.innerHTML = htmlLista;
+  // LÓGICA PARA GENERAR LA IMAGEN Y COMPARTIRLA
+    const btnIG = document.getElementById('btnCompartirIG');
+    if (btnIG) {
+        btnIG.addEventListener('click', async () => {
+            const textoOriginal = btnIG.innerHTML;
+            btnIG.innerHTML = "⏳ Generando imagen...";
+            btnIG.disabled = true;
+
+            try {
+                // 1. Escondemos el botón un segundo para que no salga en la foto
+                btnIG.style.display = 'none';
+                
+                // 2. Sacamos la "foto" al contenedor de los resultados
+                const canvas = await html2canvas(divRes, {
+                    backgroundColor: '#ffffff', // Fondo blanco para que quede prolijo
+                    scale: 2 // Alta calidad para celulares
+                });
+                
+                // Volvemos a mostrar el botón
+                btnIG.style.display = 'flex';
+
+                // 3. Convertimos el canvas a un archivo de imagen real
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'mi-simulacion.png', { type: 'image/png' });
+                    
+                    // 4. Chequeamos si es un celular que soporta compartir imágenes a apps (Web Share API)
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            title: 'Ranking Residencias 2026',
+                            text: '¡Mirá mi posición en el simulador de residencias médicas! 🏥 Entrá y fijate la tuya:',
+                            files: [file]
+                        });
+                    } else {
+                        // 5. Si está en una PC o celular viejo, simplemente le descargamos la imagen
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'simulacion-residencias.png';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        alert("✅ ¡Imagen descargada con éxito! Podés subirla a tus historias o mandarla por WhatsApp.");
+                    }
+                    
+                    // Restauramos el botón
+                    btnIG.innerHTML = textoOriginal;
+                    btnIG.disabled = false;
+                    
+                    // TRACKING PRIVADO: Anotamos que alguien compartió su resultado
+                    if (typeof registrarUso === 'function') registrarUso("COMPARTIO_IMAGEN_SIMULADOR", dniSim, "");
+                    
+                }, 'image/png');
+
+            } catch (error) {
+                console.error("Error al generar imagen:", error);
+                alert("Hubo un error al crear la imagen. Podés sacar una captura de pantalla tradicional.");
+                btnIG.style.display = 'flex';
+                btnIG.innerHTML = textoOriginal;
+                btnIG.disabled = false;
+            }
+        });
+    }
 });
 
 document.getElementById('dniSimulador').addEventListener('keypress', function (e) {
