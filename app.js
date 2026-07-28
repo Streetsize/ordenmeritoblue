@@ -244,7 +244,7 @@ window.onload = async function() {
             console.log("Padrón cargado desde la memoria (Ahorrando Firebase)");
         } else {
             // 2. Si no hay caché o está viejo, descargamos de Firebase
-            const snapshot = await get(ref(db, '/'));
+            const snapshot = await get(ref(db, 'postulantes'));
             if (snapshot.exists()) {
                 data = snapshot.val();
                 
@@ -492,7 +492,7 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
     mostrarCarga(true);
     
     try {
-        const snapshot = await get(ref(db, '/'));
+        const snapshot = await get(ref(db, 'postulantes'));
         if (!snapshot.exists()) throw new Error("La base de datos está vacía.");
         
         const data = snapshot.val();
@@ -522,7 +522,7 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
     document.getElementById('btnSiguiente').disabled = true;
 
     try {
-        const snapshot = await get(ref(db, '/'));
+        const snapshot = await get(ref(db, 'postulantes'));
         if (!snapshot.exists()) throw new Error("La base de datos está vacía.");
 
         const data = snapshot.val();
