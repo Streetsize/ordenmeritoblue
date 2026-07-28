@@ -228,13 +228,42 @@ window.onload = async function() {
         }
     });
 
-    // Lógica de carga de Firebase y porcentaje de la barra de progreso
+    // Lógica de carga de Firebase con sistema de Caché (Ahorro de datos - 30 minutos)
     try {
-        const snapshot = await get(ref(db, '/'));
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            registrosBD = Array.isArray(data) ? data : Object.values(data);
-            llavesBD = Array.isArray(data) ? data.map((_, i) => i) : Object.keys(data);
+        const cacheKey = 'padronResidencias_v1';
+        const cacheTimeKey = 'tiempoDescarga_v1';
+        const tiempoCacheMinutos = 30; // 30 minutos de vida para el caché
+
+        let data = null;
+        const now = new Date().getTime();
+        const lastFetch = localStorage.getItem(cacheTimeKey);
+
+        // 1. Verificamos si tenemos el padrón guardado y si es reciente
+        if (lastFetch && (now - lastFetch) < (tiempoCacheMinutos * 60 * 1000)) {
+            data = JSON.parse(localStorage.getItem(cacheKey));
+            console.log("Padrón cargado desde la memoria (Ahorrando Firebase)");
+        } else {
+            // 2. Si no hay caché o está viejo, descargamos de Firebase
+            const snapshot = await get(ref(db, '/'));
+            if (snapshot.exists()) {
+                data = snapshot.val();
+                
+                // Limpiamos la rama de estadísticas para que no sume al padrón
+                if (data.estadisticas_uso) {
+                    delete data.estadisticas_uso;
+                }
+                
+                // Guardamos en la memoria del navegador para la próxima
+                localStorage.setItem(cacheKey, JSON.stringify(data));
+                localStorage.setItem(cacheTimeKey, now);
+            }
+        }
+
+        // 3. Procesamos los datos y dibujamos la barra
+        if (data) {
+            // Filtramos para asegurarnos de que solo entren los postulantes válidos (ignorando nodos de configuración)
+            registrosBD = Array.isArray(data) ? data : Object.values(data).filter(r => r && r.DNI);
+            llavesBD = Array.isArray(data) ? data.map((_, i) => i) : Object.keys(data).filter(k => data[k] && data[k].DNI);
             
             const totalPostulantes = registrosBD.length;
             const conPromedio = registrosBD.filter(r => r.PROMEDIO && String(r.PROMEDIO).trim() !== "EN" && String(r.PROMEDIO).trim() !== "").length;
@@ -245,7 +274,10 @@ window.onload = async function() {
             setTimeout(() => {
                 document.getElementById('barraProgreso').style.width = porcentaje + '%';
             }, 300);
-            actualizarGraficosFlujo(registrosBD);
+            
+            if (typeof actualizarGraficosFlujo === 'function') {
+                actualizarGraficosFlujo(registrosBD);
+            }
         }
     } catch (error) {
         console.error("No se pudo cargar la estadística inicial:", error);
