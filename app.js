@@ -303,6 +303,7 @@ document.getElementById('btnOcultarDNI').addEventListener('click', async () => {
             const updates = {};
             updates[`/${indiceOcultar}/OCULTO`] = true;
             await update(ref(db), updates);
+            localStorage.setItem('miDniValidado', miDNI);
 
             // Lo actualizamos en la memoria local por si sigue navegando sin recargar la página
             registroOcultar.OCULTO = true;
@@ -790,6 +791,7 @@ document.getElementById('btnSimular').addEventListener('click', () => {
     }
 
     // 2. CÁLCULO DE SIMULACIÓN (Si ya tiene promedio en la BD)
+    localStorage.setItem('miDniValidado', dniSim);
     const miPuntaje = obtenerValorOrden(usuarioOriginal).toFixed(2);
     const miPromedio = usuarioOriginal.PROMEDIO;
     let resultados = [];
@@ -1365,7 +1367,7 @@ function coincideHospital(hospDB, hospSeleccionado) {
     return norm(hospDB).includes(norm(hospSeleccionado)) || norm(hospSeleccionado).includes(norm(hospDB));
 }
 // ==========================================
-// LÓGICA DEL BOTÓN PARA CAMBIAR DE VISTA (GENERAL / HOSPITALES)
+// LÓGICA DEL BOTÓN PARA CAMBIAR DE VISTA CON PEAJE (GATED CONTENT)
 // ==========================================
 const vistaGeneral = document.getElementById('vistaGeneral');
 const vistaHospitales = document.getElementById('vistaHospitales');
@@ -1374,14 +1376,89 @@ const btnToggleVista = document.getElementById('btnToggleVista');
 if (btnToggleVista) {
     btnToggleVista.addEventListener('click', () => {
         if (vistaGeneral.style.display !== 'none') {
-            // Ocultar General -> Mostrar Hospitales
+            // 1. Ocultar General -> Mostrar Hospitales
             vistaGeneral.style.display = 'none';
             vistaHospitales.style.display = 'block';
             
             // Cambiar aspecto del botón
             btnToggleVista.innerHTML = "📋 Volver al Ranking General";
             btnToggleVista.classList.remove('btn-secondary');
-            btnToggleVista.classList.add('btn-primary'); // Se pone azul
+            btnToggleVista.classList.add('btn-primary');
+            
+            // 2. LÓGICA DEL PEAJE
+            const contenedorHosp = document.getElementById('contenedorHospitales');
+            const dniGuardado = localStorage.getItem('miDniValidado'); // Busca el "pase VIP" en el navegador
+            let tieneAcceso = false;
+
+            // Validamos si el pase VIP existe y si efectivamente tiene el promedio cargado
+            if (dniGuardado) {
+                const userObj = registrosBD.find(r => r.DNI && r.DNI.toString() === dniGuardado);
+                if (userObj && userObj.PROMEDIO && String(userObj.PROMEDIO).trim() !== "EN" && String(userObj.PROMEDIO).trim() !== "") {
+                    tieneAcceso = true;
+                }
+            }
+
+            if (!tieneAcceso) {
+                // No tiene acceso: Ocultamos las tarjetas de hospitales y creamos el Peaje
+                Array.from(contenedorHosp.children).forEach(child => {
+                    if (child.id !== 'peajeDesbloqueo') child.style.display = 'none';
+                });
+
+                if (!document.getElementById('peajeDesbloqueo')) {
+                    const divPeaje = document.createElement('div');
+                    divPeaje.id = 'peajeDesbloqueo';
+                    divPeaje.style.textAlign = 'center';
+                    divPeaje.style.padding = '2rem';
+                    divPeaje.style.background = '#f8f9fa';
+                    divPeaje.style.border = '2px dashed #ccc';
+                    divPeaje.style.borderRadius = '8px';
+                    
+                    divPeaje.innerHTML = `
+                        <h4 style="color: #0056b3; margin-top:0;">🔒 Desbloqueá el Ranking por Hospitales</h4>
+                        <p style="margin-bottom: 20px;">Esta función exclusiva analiza tus probabilidades reales según los cupos de cada sede.<br><strong>Validá tu identidad una sola vez y tu navegador te recordará.</strong></p>
+                        <input type="text" id="dniPeajeInput" placeholder="Ingresá tu DNI" style="padding: 10px; width: 80%; max-width: 250px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                        <br>
+                        <button id="btnValidarPeaje" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Validar y Desbloquear</button>
+                        <div id="msgPeajeError" style="color: #dc3545; font-size: 0.9rem; margin-top: 10px; font-weight: bold;"></div>
+                    `;
+                    contenedorHosp.appendChild(divPeaje);
+
+                    // Evento al hacer clic en "Validar" en el peaje
+                    document.getElementById('btnValidarPeaje').addEventListener('click', () => {
+                        const dniIngresado = document.getElementById('dniPeajeInput').value.trim();
+                        const userCheck = registrosBD.find(r => r.DNI && r.DNI.toString() === dniIngresado);
+                        const errorBox = document.getElementById('msgPeajeError');
+
+                        if (!userCheck) {
+                            errorBox.innerText = "DNI no encontrado en el padrón de examen.";
+                            return;
+                        }
+                        if (!userCheck.PROMEDIO || String(userCheck.PROMEDIO).trim() === "EN" || String(userCheck.PROMEDIO).trim() === "") {
+                            errorBox.innerHTML = "Tu DNI está en el padrón, pero <strong>todavía no cargaste tu promedio</strong>.<br>Usá el Simulador o el botón del Inicio para cargarlo y desbloquear esta sección.";
+                            return;
+                        }
+
+                        // ÉXITO: Guardamos el "Pase VIP" en localStorage para siempre
+                        localStorage.setItem('miDniValidado', dniIngresado);
+                        
+                        // TRACKING: Anotamos en Firebase que este usuario cayó en la trampa y desbloqueó
+                        if (typeof registrarUso === 'function') registrarUso("PEAJE_SUPERADO", dniIngresado, "");
+
+                        // Borramos el peaje visualmente y revelamos todos los hospitales
+                        divPeaje.remove();
+                        Array.from(contenedorHosp.children).forEach(child => child.style.display = 'block');
+                    });
+                } else {
+                    document.getElementById('peajeDesbloqueo').style.display = 'block';
+                }
+            } else {
+                // YA TENÍA ACCESO GUARDADO: Nos aseguramos que vea los hospitales directamente
+                if (document.getElementById('peajeDesbloqueo')) document.getElementById('peajeDesbloqueo').style.display = 'none';
+                Array.from(contenedorHosp.children).forEach(child => {
+                    if (child.id !== 'peajeDesbloqueo') child.style.display = 'block';
+                });
+            }
+            
         } else {
             // Ocultar Hospitales -> Mostrar General
             vistaGeneral.style.display = 'block';
@@ -1390,7 +1467,7 @@ if (btnToggleVista) {
             // Cambiar aspecto del botón
             btnToggleVista.innerHTML = "🏥 Ver por Hospitales";
             btnToggleVista.classList.remove('btn-primary');
-            btnToggleVista.classList.add('btn-secondary'); // Vuelve al color original
+            btnToggleVista.classList.add('btn-secondary');
         }
     });
 }
