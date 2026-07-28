@@ -703,22 +703,74 @@ document.getElementById('btnSimular').addEventListener('click', () => {
         divRes.style.display = 'block';
         divRes.innerHTML = `
             <div class="sim-fail" style="background-color: #fff3f3; padding: 15px; border-radius: 4px; border: 1px solid #dc3545; color: #721c24; text-align: center;">
-                <strong>⚠️ Falta tu promedio</strong><br>
-                Todavía no cargaste tu promedio en el sistema. Para que la simulación sea exacta, primero tenés que cargar tus datos.
-                <button id="btnIrACargar" style="background-color: #0056b3; color: white; border: none; padding: 10px 15px; border-radius: 4px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%;">Ir a Cargar Promedio</button>
+                <strong style="display:block; margin-bottom: 10px;">⚠️ Falta tu promedio</strong>
+                Para simular con exactitud y de paso actualizar tu puntaje oficial en los rankings, completá estos datos rápidos:
+                
+                <div style="margin-top: 15px; text-align: left;">
+                    <label style="font-size: 0.9rem; font-weight: bold;">Promedio de la Facultad:</label>
+                    <input type="text" id="simPromedioInput" placeholder="Ej: 8.5" style="width: 100%; padding: 0.75rem; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; text-align: left;">
+                    <input type="checkbox" id="simMendozaCheck" checked style="transform: scale(1.2); margin:0;">
+                    <label for="simMendozaCheck" style="font-size: 0.9rem;">Soy egresado de Mendoza (+5 pts)</label>
+                </div>
+
+                <button id="btnGuardarYSimular" style="background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%;">Guardar Datos y Simular</button>
             </div>
         `;
         
-        document.getElementById('btnIrACargar').addEventListener('click', () => {
-            document.getElementById('dniBuscador').value = dniSim;
-            window.scrollTo({ top: 0, behavior: 'smooth' }); 
-            document.getElementById('btnSiguiente').click(); 
+        // Lógica para guardar el promedio directamente a Firebase desde el Simulador
+        document.getElementById('btnGuardarYSimular').addEventListener('click', async () => {
+            const promVal = document.getElementById('simPromedioInput').value.replace(',', '.');
+            const promedio = parseFloat(promVal);
+            
+            if (!promVal || isNaN(promedio)) {
+                alert("Por favor, ingresá un promedio válido.");
+                return;
+            }
+            
+            const esDeMendoza = document.getElementById('simMendozaCheck').checked;
+            const btnGS = document.getElementById('btnGuardarYSimular');
+            
+            btnGS.innerText = "Guardando en la base de datos...";
+            btnGS.disabled = true;
+            
+            try {
+                // Cálculo matemático de la nota final
+                const notaExamen = parseFloat(usuarioOriginal.NOTA) || 0;
+                const ptsMza = esDeMendoza ? 5 : 0;
+                const notaFinal = (notaExamen * 0.90) + (promedio * 0.5) + ptsMza;
+                
+                // Buscamos la llave (ID) de este usuario en Firebase
+                let indiceActualizar = llavesBD[registrosBD.indexOf(usuarioOriginal)];
+                
+                // Actualizamos Firebase
+                import { update, ref } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+                const updates = {};
+                updates[`/${indiceActualizar}/PROMEDIO`] = promedio;
+                updates[`/${indiceActualizar}/NOTA_FINAL`] = parseFloat(notaFinal.toFixed(2));
+                
+                await update(ref(db), updates);
+                
+                // Actualizamos la memoria local para no tener que recargar la página
+                usuarioOriginal.PROMEDIO = promedio;
+                usuarioOriginal.NOTA_FINAL = parseFloat(notaFinal.toFixed(2));
+                
+                // Una vez guardado, disparamos el simulador automáticamente
+                document.getElementById('btnSimular').click();
+                
+            } catch(error) {
+                alert("Hubo un error al guardar: " + error.message);
+                btnGS.innerText = "Guardar Datos y Simular";
+                btnGS.disabled = false;
+            }
         });
         
-        return;
+        return; // Frenamos acá hasta que cargue los datos
     }
 
-    // 2. CÁLCULO DE SIMULACIÓN (Si tiene promedio)
+    // 2. CÁLCULO DE SIMULACIÓN (Si ya tiene promedio en la BD)
     const miPuntaje = obtenerValorOrden(usuarioOriginal).toFixed(2);
     const miPromedio = usuarioOriginal.PROMEDIO;
     let resultados = [];
@@ -734,9 +786,8 @@ document.getElementById('btnSimular').addEventListener('click', () => {
     for (const [esp, cupos] of Object.entries(cuposPorEspecialidad)) {
         if (!esp.includes("(Primer nivel)")) continue;
 
-        // NUEVO: Verificamos si la especialidad pertenece a la lista negra
         const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
-        if (esNoMedica) continue; // Si no es médica, la saltamos y pasamos a la siguiente
+        if (esNoMedica) continue; 
 
         let competidores = registrosBD.filter(r =>
             coincideEspecialidad(r.ESPECIALIDAD, esp) && r.DNI.toString() !== dniSim
