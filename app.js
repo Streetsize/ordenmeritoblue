@@ -208,11 +208,27 @@ const listaEspLibre = document.getElementById('listaEspLibre');
 
 window.onload = async function() {
     const especialidades = Object.keys(datosResidencias).sort();
+    
+    // Lista de palabras clave de carreras que queremos ocultar en TODA la página
+    const carrerasNoMedicas = [
+        "AUDIOLOGÍA", "BIOQUÍMICA", "ENDODONCIA", "ENFERMERÍA", 
+        "FARMACIA", "KINESIOLOGÍA", "NUTRICIÓN", "ODONTOLOGÍA", 
+        "ODONTOPEDIATRÍA", "PSICOLOGÍA", "TRABAJO SOCIAL"
+    ];
+
     especialidades.forEach(esp => {
-        listaEsp.appendChild(new Option(esp, esp));
-        listaEspLibre.appendChild(new Option(esp, esp));
+        // Filtramos para asegurarnos de que sea Primer Nivel y NO esté en la lista negra
+        const esPrimerNivel = esp.includes("(Primer nivel)");
+        const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
+        
+        if (esPrimerNivel && !esNoMedica) {
+            // Se agregan las opciones limpias a AMBOS selectores
+            listaEsp.appendChild(new Option(esp, esp));
+            listaEspLibre.appendChild(new Option(esp, esp));
+        }
     });
 
+    // Lógica de carga de Firebase y porcentaje de la barra de progreso
     try {
         const snapshot = await get(ref(db, '/'));
         if (snapshot.exists()) {
