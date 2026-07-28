@@ -127,6 +127,35 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         /* ESTILOS DE LOS BOXES DE ESTADISTICA */
         .stat-box { background-color: #fff; }
 
+        /* --------------- SECCIÓN COLAPSABLE (GRÁFICOS/ESTADÍSTICAS) --------------- */
+        .btn-toggle-stats {
+            width: 100%;
+            background: #f1f8ff;
+            border: 1px solid #cce5ff;
+            color: #0056b3;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        .btn-toggle-stats:hover { background: #e1f0ff; }
+        .btn-toggle-stats .flecha { transition: transform 0.3s ease; display: inline-block; }
+        .btn-toggle-stats.abierta .flecha { transform: rotate(180deg); }
+        .seccion-colapsable {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+        .seccion-colapsable.abierta {
+            max-height: 5000px;
+        }
+
         /* --------------- ESTILOS MODO OSCURO --------------- */
         body.dark-mode { background-color: #121212; color: #e0e0e0; }
         body.dark-mode .container { background-color: #1e1e1e; box-shadow: 0 4px 12px rgba(255,255,255,0.05); }
@@ -144,6 +173,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         body.dark-mode .fila-usuario td { background-color: #1b4332 !important; border-left-color: #28a745; color: #fff; }
         body.dark-mode .fila-afuera td { background-color: #3a1518 !important; color: #999; }
         body.dark-mode .leyenda, body.dark-mode .disclaimer { color: #aaa; }
+        body.dark-mode .btn-toggle-stats { background: #2a2a2a; border-color: #444; color: #66b2ff; }
+        body.dark-mode .btn-toggle-stats:hover { background: #333; }
         body.dark-mode .card-opcion[style*="background-color: #fff9e6"] { 
         background-color: #332b00 !important; 
         border-color: #665c00 !important; 
@@ -249,6 +280,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div id="resultadosSimulacion" style="display: none; margin-top: 15px;"></div>
             </div>
 
+            <div style="height: 20px; width: 100%; clear: both;"></div>
+
+            <!-- BOTÓN PARA DESPLEGAR GRÁFICOS Y ESTADÍSTICAS -->
+            <button type="button" id="btnToggleEstadisticas" class="btn-toggle-stats">
+                <span id="txtToggleEstadisticas">📊 Ver gráficos y estadísticas del examen</span>
+                <span class="flecha">▼</span>
+            </button>
+
+            <div id="seccionEstadisticas" class="seccion-colapsable">
+
            <!-- INICIO DE GRÁFICOS DE ESPECIALIDADES DIVIDIDOS -->
             <div style="max-width: 800px; margin: 40px auto; padding: 0 15px;">
                 
@@ -327,6 +368,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
             </div>
             <!-- FIN DE ESTADÍSTICAS DEL EXAMEN -->
+
+            </div>
+            <!-- FIN SECCIÓN COLAPSABLE -->
 
         </div>
 
@@ -491,6 +535,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         }
                     }
                 }
+            });
+        });
+    </script>
+
+    <!-- Script para desplegar/colapsar la sección de gráficos y estadísticas -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnToggle = document.getElementById('btnToggleEstadisticas');
+            const seccion = document.getElementById('seccionEstadisticas');
+            const txtToggle = document.getElementById('txtToggleEstadisticas');
+
+            btnToggle.addEventListener('click', function() {
+                const abierta = seccion.classList.toggle('abierta');
+                btnToggle.classList.toggle('abierta', abierta);
+                txtToggle.textContent = abierta
+                    ? '📊 Ocultar gráficos y estadísticas del examen'
+                    : '📊 Ver gráficos y estadísticas del examen';
             });
         });
     </script>
