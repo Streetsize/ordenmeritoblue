@@ -183,10 +183,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         body.dark-mode .caja-comentarios { background-color: #112a46 !important; border-color: #1c4572 !important; }
         body.dark-mode .titulo-comentarios { color: #66b2ff !important; }
         
-        /* Ajuste para que el texto de la caja de comentarios se vea bien de noche */
-        body.dark-mode #textoComentario { background-color: #2c2c2c; color: #fff; border-color: #444; }
-        background-color: #332b00 !important; 
-        border-color: #665c00 !important; 
+        /* Ajuste forzado para la caja de texto en modo oscuro */
+        body.dark-mode #textoComentario { 
+            background-color: #2c2c2c !important; 
+            color: #ffffff !important; 
+            border-color: #444444 !important; 
+        }
+        
+        /* Para que el texto "Escribe tu mensaje aquí..." se vea gris clarito y no encandile */
+        body.dark-mode #textoComentario::placeholder {
+            color: #aaaaaa !important;
+        }
         /* COLORES BASE (MODO CLARO) PARA BANNERS Y COMENTARIOS */
         .banner-nuevo { background: #e8f5e9; border: 1px solid #c3e6cb; }
         .banner-nuevo .banner-texto { color: #155724; }
