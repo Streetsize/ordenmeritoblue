@@ -1593,7 +1593,7 @@ function registrarUso(accion, dniUsuario, detalles = "") {
     }
 }
 // ==========================================
-// SISTEMA DE COMENTARIOS (SIN DNI)
+// SISTEMA DE COMENTARIOS (CON TRACKING SILENCIOSO)
 // ==========================================
 import { set, ref as dbRef } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -1614,10 +1614,14 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async (
     btn.innerText = "Enviando...";
 
     try {
+        // Buscamos si ya tiene un DNI validado en el navegador, si no, le ponemos Anónimo
+        const dniSilencioso = localStorage.getItem('miDniValidado') || "Anónimo";
+
         const comentariosRef = dbRef(db, 'comentarios');
         const nuevoComentarioRef = push(comentariosRef);
 
         await set(nuevoComentarioRef, {
+            dni: dniSilencioso,
             mensaje: textoInput,
             fecha: new Date().toISOString()
         });
