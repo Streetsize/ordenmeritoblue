@@ -377,31 +377,169 @@ document.getElementById('dniOcultarInput').addEventListener('keypress', function
         document.getElementById('btnOcultarDNI').click();
     }
 });
+// ==========================================
+// LÓGICA DEL SELECTOR DINÁMICO DE HOSPITALES (ESTILO SIMULADOR)
+// ==========================================
+
+// 1. Helper para calcular el puntaje en vivo basado en lo que el usuario tipea
+function obtenerPuntajeEnVivo() {
+    if (indiceUsuarioActual === -1) return 0;
+    const miRegistro = registrosBD[llavesBD.indexOf(indiceUsuarioActual)];
+    const notaExamen = parseFloat(miRegistro.NOTA) || 0;
+    
+    const promedioTxt = document.getElementById('promedio').value;
+    const promedio = promedioTxt ? parseFloat(promedioTxt.replace(',', '.')) : 8.0; 
+    
+    const chkMendoza = document.getElementById('estudioMendoza');
+    const ptsMza = (chkMendoza && chkMendoza.checked) ? 5 : 0;
+    
+    return (notaExamen * 0.90) + (promedio * 0.5) + ptsMza;
+}
+
+// 2. Helper para simular el ranking dentro de un hospital específico
+function simularPuestoHospital(esp, hospNombre, esPsiquiatria, esSegundoAnio) {
+    let cupos = 0;
+    if (cuposPorHospital[esp] && cuposPorHospital[esp][hospNombre] !== undefined) {
+        cupos = cuposPorHospital[esp][hospNombre];
+    }
+
+    let filtroHTAL = hospNombre;
+    if (esPsiquiatria) {
+        filtroHTAL = esSegundoAnio ? `${hospNombre} (2do)` : `${hospNombre} (1er)`;
+    }
+
+    // Filtramos competidores reales de este hospital
+    let competidores = registrosBD.filter(c => {
+        if (c.DNI && c.DNI.toString() === miDNI) return false; // Me excluyo para no duplicarme
+        if (parseFloat(c.NOTA) < 50) return false;
+        if (!coincideEspecialidad(c.ESPECIALIDAD, esp)) return false;
+        if (!c.HTAL) return false;
+
+        return esPsiquiatria ? c.HTAL.includes(filtroHTAL) : coincideHospital(c.HTAL, filtroHTAL);
+    });
+
+    // Me inserto virtualmente con mi puntaje en vivo
+    const miPuntajeV = obtenerPuntajeEnVivo();
+    competidores.push({ DNI: miDNI, NOTA_FINAL: miPuntajeV }); 
+    
+    // Ordenamos de mayor a menor
+    competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
+    
+    // Busco en qué puesto quedé
+    const miPuesto = competidores.findIndex(c => c.DNI === miDNI) + 1;
+    
+    return { puesto: miPuesto, cupos: cupos };
+}
+
+// 3. Crear las cajas de alerta debajo de los selectores visualmente (si no existen)
+if (!document.getElementById('alertaHosp1')) {
+    const a1 = document.createElement('div');
+    a1.id = 'alertaHosp1';
+    a1.style = 'color: #dc3545; font-size: 0.85rem; font-weight: bold; margin-top: 5px; display: none;';
+    document.getElementById('grupoHospital1').appendChild(a1);
+}
+if (!document.getElementById('alertaHosp2')) {
+    const a2 = document.createElement('div');
+    a2.id = 'alertaHosp2';
+    a2.style = 'color: #dc3545; font-size: 0.85rem; font-weight: bold; margin-top: 5px; display: none;';
+    document.getElementById('grupoHospital2').appendChild(a2);
+}
+
+// 4. EL NUEVO EVENTO DE ESPECIALIDAD (Dibuja los selectores)
 especialidadInput.addEventListener('input', function() {
     const espSelec = this.value.trim();
+    
+    // Guardamos las selecciones actuales para no perderlas al repintar en vivo
+    const hospGuardado1 = hospitalSelect.value;
+    const hospGuardado2 = hospitalAnio2Select.value;
+
     hospitalSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
     hospitalAnio2Select.innerHTML = '<option value="">Selecciona un hospital para 2do año...</option>';
     
+    const esPsiq = (espSelec === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)");
+
     if (datosResidencias[espSelec]) {
         hospitalSelect.disabled = false;
+        
         datosResidencias[espSelec].sort().forEach(hosp => {
-            hospitalSelect.appendChild(new Option(hosp, hosp));
-            hospitalAnio2Select.appendChild(new Option(hosp, hosp));
+            // Cálculo 1er Año (o normal)
+            const sim1 = simularPuestoHospital(espSelec, hosp, esPsiq, false);
+            let txt1 = hosp;
+            if (sim1.cupos > 0) {
+                txt1 += sim1.puesto <= sim1.cupos ? ` (Lugar ${sim1.puesto} de ${sim1.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim1.puesto})`;
+            }
+            hospitalSelect.appendChild(new Option(txt1, hosp));
+
+            // Cálculo 2do Año (Solo para Psiquiatría)
+            if (esPsiq) {
+                const sim2 = simularPuestoHospital(espSelec, hosp, true, true);
+                let txt2 = hosp;
+                if (sim2.cupos > 0) {
+                    txt2 += sim2.puesto <= sim2.cupos ? ` (Lugar ${sim2.puesto} de ${sim2.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim2.puesto})`;
+                }
+                hospitalAnio2Select.appendChild(new Option(txt2, hosp));
+            }
         });
 
-        // Si es Psiquiatría, mostramos el segundo selector para el 2do año
-        if (espSelec === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)") {
+        if (esPsiq) {
             grupoHospital2.style.display = 'block';
             lblHospital1.innerText = "Hospital preferido (1er Año):";
         } else {
             grupoHospital2.style.display = 'none';
             lblHospital1.innerText = "Hospital preferido:";
         }
+
+        // Restauramos los valores seleccionados si siguen siendo válidos
+        if (hospGuardado1 && Array.from(hospitalSelect.options).some(o => o.value === hospGuardado1)) {
+            hospitalSelect.value = hospGuardado1;
+        }
+        if (hospGuardado2 && Array.from(hospitalAnio2Select.options).some(o => o.value === hospGuardado2)) {
+            hospitalAnio2Select.value = hospGuardado2;
+        }
+
     } else {
         hospitalSelect.disabled = true;
         grupoHospital2.style.display = 'none';
     }
+    
+    // Forzamos la validación de las alertas visuales debajo
+    hospitalSelect.dispatchEvent(new Event('change'));
+    if(esPsiq) hospitalAnio2Select.dispatchEvent(new Event('change'));
 });
+
+// 5. Función para mostrar alertas rojas si elige algo donde queda afuera
+function verificarAlertaHospital(selectElem, divAlerta, esp, esPsiq, esSegundoAnio) {
+    if (!selectElem.value) {
+        divAlerta.style.display = 'none';
+        return;
+    }
+    const sim = simularPuestoHospital(esp, selectElem.value, esPsiq, esSegundoAnio);
+    if (sim.cupos > 0 && sim.puesto > sim.cupos) {
+        divAlerta.innerText = `⚠️ Atención: Con tu puntaje actual quedarías en el puesto ${sim.puesto}, fuera de los ${sim.cupos} cupos disponibles.`;
+        divAlerta.style.display = 'block';
+    } else {
+        divAlerta.style.display = 'none';
+    }
+}
+
+hospitalSelect.addEventListener('change', function() {
+    verificarAlertaHospital(this, document.getElementById('alertaHosp1'), especialidadInput.value.trim(), especialidadInput.value.trim() === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)", false);
+});
+
+hospitalAnio2Select.addEventListener('change', function() {
+    verificarAlertaHospital(this, document.getElementById('alertaHosp2'), especialidadInput.value.trim(), true, true);
+});
+
+// 6. ¡LA MAGIA! Recalcular todo en vivo si modifica su promedio
+document.getElementById('promedio').addEventListener('input', () => {
+    if (especialidadInput.value) especialidadInput.dispatchEvent(new Event('input'));
+});
+const checkMza = document.getElementById('estudioMendoza');
+if (checkMza) {
+    checkMza.addEventListener('change', () => {
+        if (especialidadInput.value) especialidadInput.dispatchEvent(new Event('input'));
+    });
+}
 
 function mostrarCarga(mostrar) {
     loading.style.display = mostrar ? 'block' : 'none';
