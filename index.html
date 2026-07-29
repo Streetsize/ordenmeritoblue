@@ -184,14 +184,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         body.dark-mode .titulo-comentarios { color: #66b2ff !important; }
         
         /* Ajuste forzado para la caja de texto en modo oscuro */
-        body.dark-mode #textoComentario { 
-            background-color: #2c2c2c !important; 
-            color: #ffffff !important; 
-            border-color: #444444 !important; 
+body.dark-mode .input-comentario {
+            background-color: #2c2c2c !important;
+            color: #ffffff !important;
+            border-color: #555555 !important;
         }
         
-        /* Para que el texto "Escribe tu mensaje aquí..." se vea gris clarito y no encandile */
-        body.dark-mode #textoComentario::placeholder {
+        body.dark-mode .input-comentario::placeholder {
             color: #aaaaaa !important;
         }
         /* COLORES BASE (MODO CLARO) PARA BANNERS Y COMENTARIOS */
@@ -199,6 +198,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #e8f5e9; 
             border: 1px solid #000000; /* Borde negro de 1px */
             border-radius: 8px; /* Esquinas levemente redondeadas */
+        }
+        .input-comentario {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            resize: vertical;
+            background-color: #ffffff;
+            color: #333333;
         }
         
         .caja-comentarios { background-color: #e8f4fd !important; border-color: #b8daff !important; }
@@ -506,7 +516,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     Dejanos tu Comentario o Sugerencia
                 </h4>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <textarea id="textoComentario" rows="3" placeholder="Escribe tu mensaje aquí..." style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; resize: vertical;"></textarea>
+                    <textarea id="textoComentario" class="input-comentario" rows="3" placeholder="Escribe tu mensaje aquí..."></textarea>
                     <button id="btnEnviarComentario" style="width: auto; padding: 0.75rem 1.5rem; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; align-self: flex-end; margin: 0;">Enviar Comentario</button>
                 </div>
                 <div id="mensajeComentarioEstado" style="display: none; margin-top: 10px; font-size: 0.9rem; font-weight: bold;"></div>
