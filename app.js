@@ -202,6 +202,9 @@ const tituloTabla = document.getElementById('tituloTabla');
 
 const especialidadInput = document.getElementById('especialidad');
 const hospitalSelect = document.getElementById('hospital');
+const grupoHospital2 = document.getElementById('grupoHospital2');
+const hospitalAnio2Select = document.getElementById('hospitalAnio2');
+const lblHospital1 = document.getElementById('lblHospital1');
 const especialidadLibreInput = document.getElementById('especialidadLibre');
 const listaEsp = document.getElementById('listaEsp');
 const listaEspLibre = document.getElementById('listaEspLibre');
@@ -377,14 +380,26 @@ document.getElementById('dniOcultarInput').addEventListener('keypress', function
 especialidadInput.addEventListener('input', function() {
     const espSelec = this.value.trim();
     hospitalSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
+    hospitalAnio2Select.innerHTML = '<option value="">Selecciona un hospital para 2do año...</option>';
     
     if (datosResidencias[espSelec]) {
         hospitalSelect.disabled = false;
         datosResidencias[espSelec].sort().forEach(hosp => {
             hospitalSelect.appendChild(new Option(hosp, hosp));
+            hospitalAnio2Select.appendChild(new Option(hosp, hosp));
         });
+
+        // Si es Psiquiatría, mostramos el segundo selector para el 2do año
+        if (espSelec === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)") {
+            grupoHospital2.style.display = 'block';
+            lblHospital1.innerText = "Hospital preferido (1er Año):";
+        } else {
+            grupoHospital2.style.display = 'none';
+            lblHospital1.innerText = "Hospital preferido:";
+        }
     } else {
         hospitalSelect.disabled = true;
+        grupoHospital2.style.display = 'none';
     }
 });
 
@@ -554,7 +569,15 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
             especialidadInput.value = miRegistro.ESPECIALIDAD;
             especialidadInput.dispatchEvent(new Event('input'));
             
-            if (miRegistro.HTAL) hospitalSelect.value = miRegistro.HTAL;
+        if (miRegistro.HTAL) {
+                if (miRegistro.ESPECIALIDAD === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)" && miRegistro.HTAL.includes(" (1er) / ")) {
+                    const partesHosp = miRegistro.HTAL.split(" (1er) / ");
+                    hospitalSelect.value = partesHosp[0];
+                    if (partesHosp[1]) hospitalAnio2Select.value = partesHosp[1].replace(" (2do)", "");
+                } else {
+                    hospitalSelect.value = miRegistro.HTAL;
+                }
+            }
         }
 
         mostrarCarga(false);
@@ -580,11 +603,18 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
     
     const promedio = parseFloat(promedioTxt.replace(',', '.'));
     const especialidad = especialidadInput.value.trim();
-    const hospital = hospitalSelect.value;
+    let hospital = hospitalSelect.value;
+    const hospitalAnio2 = hospitalAnio2Select.value;
     const estudioMendoza = document.getElementById('estudioMendoza').checked;
 
     if (!especialidad || !datosResidencias[especialidad] || !hospital) {
         return mostrarError("Asegurate de haber elegido una especialidad válida de la lista y un hospital.");
+    }
+
+    // Si es Psiquiatría, exigimos y unimos los dos hospitales en una sola cadena
+    if (especialidad === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)") {
+        if (!hospitalAnio2) return mostrarError("Para Psiquiatría debés elegir un hospital para el 1er año y otro para el 2do año.");
+        hospital = `${hospital} (1er) / ${hospitalAnio2} (2do)`;
     }
 
     mostrarCarga(true);
@@ -1377,15 +1407,31 @@ function generarDesglosPorHospitales(especialidadABuscar, dniSeleccionado = null
         return notaExamen >= NOTA_MINIMA_VISIBLE || (dniSeleccionado && p.DNI.toString() === dniSeleccionado);
     });
 
-    // Iteramos por cada hospital que ofrece la especialidad
+    // Identificamos si es Psiquiatría para duplicar las tablas (1er y 2do año)
+    const esPsiquiatria = especialidadABuscar === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)";
+    let tablasAGenerar = [];
+
     for (const [hospitalNombre, cuposHospital] of Object.entries(cuposHospEsp)) {
-        // Filtramos postulantes que eligieron este hospital específico
-        let inscriptosHosp = competidores.filter(c => c.HTAL && coincideHospital(c.HTAL, hospitalNombre));
+        if (esPsiquiatria) {
+            tablasAGenerar.push({ titulo: `${hospitalNombre} (1er Año)`, cupos: cuposHospital, filtro: `${hospitalNombre} (1er)` });
+            tablasAGenerar.push({ titulo: `${hospitalNombre} (2do Año)`, cupos: cuposHospital, filtro: `${hospitalNombre} (2do)` });
+        } else {
+            tablasAGenerar.push({ titulo: hospitalNombre, cupos: cuposHospital, filtro: hospitalNombre });
+        }
+    }
+
+    // Iteramos por cada tabla a generar
+    tablasAGenerar.forEach(tablaInfo => {
+        // Filtramos postulantes que eligieron este hospital y año específico
+        let inscriptosHosp = competidores.filter(c => {
+            if (!c.HTAL) return false;
+            return esPsiquiatria ? c.HTAL.includes(tablaInfo.filtro) : coincideHospital(c.HTAL, tablaInfo.filtro);
+        });
 
         // Ordenamos de mayor a menor según puntaje
         inscriptosHosp.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
 
-        // Creamos la card / sección para este hospital
+        // Creamos la card / sección para este hospital/año
         const cardHosp = document.createElement('div');
         cardHosp.className = 'card-opcion';
         cardHosp.style.marginBottom = '1.5rem';
@@ -1393,15 +1439,15 @@ function generarDesglosPorHospitales(especialidadABuscar, dniSeleccionado = null
 
         let htmlHosp = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                <h4 style="margin: 0; color: #0056b3; font-size: 1.1rem;">🏥 ${hospitalNombre}</h4>
+                <h4 style="margin: 0; color: #0056b3; font-size: 1.1rem;">🏥 ${tablaInfo.titulo}</h4>
                 <span style="background: #17a2b8; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
-                    Cupos: ${cuposHospital} | Inscriptos: ${inscriptosHosp.length}
+                    Cupos: ${tablaInfo.cupos} | Inscriptos: ${inscriptosHosp.length}
                 </span>
             </div>
         `;
 
         if (inscriptosHosp.length === 0) {
-            htmlHosp += `<p style="font-size: 0.9rem; color: #777; font-style: italic; margin: 0;">Todavía no hay postulantes inscriptos con este hospital seleccionado.</p>`;
+            htmlHosp += `<p style="font-size: 0.9rem; color: #777; font-style: italic; margin: 0;">Todavía no hay postulantes inscriptos para esta opción.</p>`;
         } else {
             htmlHosp += `
                 <div class="table-responsive">
@@ -1425,10 +1471,10 @@ function generarDesglosPorHospitales(especialidadABuscar, dniSeleccionado = null
                 if (dniSeleccionado && c.DNI.toString() === dniSeleccionado) {
                     claseFila = 'fila-usuario';
                 }
-                if (cuposHospital > 0 && puesto > cuposHospital) {
+                if (tablaInfo.cupos > 0 && puesto > tablaInfo.cupos) {
                     claseFila = 'fila-afuera';
                 }
-                if (cuposHospital > 0 && puesto === cuposHospital + 1) {
+                if (tablaInfo.cupos > 0 && puesto === tablaInfo.cupos + 1) {
                     claseFila += ' fila-corte';
                 }
 
@@ -1438,7 +1484,7 @@ function generarDesglosPorHospitales(especialidadABuscar, dniSeleccionado = null
                 let dniMostrado = censurarDNI(c);
 
                 let contenidoPos = `<strong>${puesto}</strong>`;
-                if (cuposHospital > 0 && puesto === cuposHospital + 1) {
+                if (tablaInfo.cupos > 0 && puesto === tablaInfo.cupos + 1) {
                     contenidoPos += `<span class="etiqueta-corte">Límite Cupos</span>`;
                 }
 
@@ -1462,7 +1508,7 @@ function generarDesglosPorHospitales(especialidadABuscar, dniSeleccionado = null
 
         cardHosp.innerHTML = htmlHosp;
         contenedor.appendChild(cardHosp);
-    }
+    });
 }
 
 // Función auxiliar para matchear nombres de hospitales con flexibilidad
