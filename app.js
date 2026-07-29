@@ -1593,42 +1593,19 @@ function registrarUso(accion, dniUsuario, detalles = "") {
     }
 }
 // ==========================================
-// SISTEMA DE COMENTARIOS CON VALIDACIÓN DE DNI
+// SISTEMA DE COMENTARIOS (SIN DNI)
 // ==========================================
 import { set, ref as dbRef } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 document.getElementById('btnEnviarComentario').addEventListener('click', async () => {
-    const dniInput = document.getElementById('dniComentario').value.trim();
     const textoInput = document.getElementById('textoComentario').value.trim();
     const cajaEstado = document.getElementById('mensajeComentarioEstado');
 
     cajaEstado.style.display = 'block';
 
-    if (!dniInput) {
-        cajaEstado.style.color = '#721c24';
-        cajaEstado.innerText = "⚠️ Debes ingresar tu DNI.";
-        return;
-    }
-
     if (!textoInput) {
         cajaEstado.style.color = '#721c24';
         cajaEstado.innerText = "⚠️ El mensaje no puede estar vacío.";
-        return;
-    }
-
-    // Validamos que la base de datos en memoria esté cargada
-    if (!registrosBD || registrosBD.length === 0) {
-        cajaEstado.style.color = '#721c24';
-        cajaEstado.innerText = "⚠️ La base de datos aún se está cargando. Intentá de nuevo en unos segundos.";
-        return;
-    }
-
-    // Buscamos si el DNI existe en el padrón general
-    const dniValido = registrosBD.some(r => r.DNI && String(r.DNI).trim() === dniInput);
-
-    if (!dniValido) {
-        cajaEstado.style.color = '#721c24';
-        cajaEstado.innerText = "❌ El DNI ingresado no figura en el padrón oficial de inscriptos.";
         return;
     }
 
@@ -1641,12 +1618,10 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async (
         const nuevoComentarioRef = push(comentariosRef);
 
         await set(nuevoComentarioRef, {
-            dni: dniInput, // Guardamos el DNI para trazabilidad y seguridad ante reportes
             mensaje: textoInput,
             fecha: new Date().toISOString()
         });
 
-        document.getElementById('dniComentario').value = "";
         document.getElementById('textoComentario').value = "";
         
         cajaEstado.style.color = '#155724';
