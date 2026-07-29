@@ -466,7 +466,7 @@ especialidadInput.addEventListener('input', function() {
             const sim1 = simularPuestoHospital(espSelec, hosp, esPsiq, false);
             let txt1 = hosp;
             if (sim1.cupos > 0) {
-                txt1 += sim1.puesto <= sim1.cupos ? ` (Lugar ${sim1.puesto} de ${sim1.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim1.puesto})`;
+                txt1 += sim1.puesto <= sim1.cupos ? ` (Puesto ${sim1.puesto} de ${sim1.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim1.puesto})`;
             }
             hospitalSelect.appendChild(new Option(txt1, hosp));
 
@@ -475,7 +475,7 @@ especialidadInput.addEventListener('input', function() {
                 const sim2 = simularPuestoHospital(espSelec, hosp, true, true);
                 let txt2 = hosp;
                 if (sim2.cupos > 0) {
-                    txt2 += sim2.puesto <= sim2.cupos ? ` (Lugar ${sim2.puesto} de ${sim2.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim2.puesto})`;
+                    txt2 += sim2.puesto <= sim2.cupos ? ` (Puesto ${sim2.puesto} de ${sim2.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim2.puesto})`;
                 }
                 hospitalAnio2Select.appendChild(new Option(txt2, hosp));
             }
