@@ -176,8 +176,25 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         body.dark-mode .btn-toggle-stats { background: #2a2a2a; border-color: #444; color: #66b2ff; }
         body.dark-mode .btn-toggle-stats:hover { background: #333; }
         body.dark-mode .card-opcion[style*="background-color: #fff9e6"] { 
+        /* AJUSTES MODO OSCURO PARA BANNERS Y COMENTARIOS */
+        body.dark-mode .banner-nuevo { background: #15301c; border-color: #1e7e34; }
+        body.dark-mode .banner-nuevo .banner-texto { color: #d4edda; }
+        
+        body.dark-mode .caja-comentarios { background-color: #112a46 !important; border-color: #1c4572 !important; }
+        body.dark-mode .titulo-comentarios { color: #66b2ff !important; }
+        
+        /* Ajuste para que el texto de la caja de comentarios se vea bien de noche */
+        body.dark-mode #textoComentario { background-color: #2c2c2c; color: #fff; border-color: #444; }
         background-color: #332b00 !important; 
         border-color: #665c00 !important; 
+        /* COLORES BASE (MODO CLARO) PARA BANNERS Y COMENTARIOS */
+        .banner-nuevo { background: #e8f5e9; border: 1px solid #c3e6cb; }
+        .banner-nuevo .banner-texto { color: #155724; }
+        .banner-nuevo .badge-nuevo { background: #dc3545; color: white; }
+        .banner-nuevo .btn-banner { background: #28a745; color: white; }
+        
+        .caja-comentarios { background-color: #e8f4fd !important; border-color: #b8daff !important; }
+        .titulo-comentarios { color: #004085; }
         }
 body.dark-mode .card-opcion[style*="background-color: #fff9e6"] h4 { color: #ffda6a !important; }
 body.dark-mode .card-opcion[style*="background-color: #fff9e6"] p { color: #ccc !important; }
@@ -218,20 +235,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- PASO 1: Inicio -->
         <div id="paso1">
             <p style="text-align: center; color: #777; margin-bottom: 2rem;">Mendoza</p>
-            <!-- AVISO DE NUEVO SIMULADOR -->
-            <div class="banner-nuevo" style="background: #e8f5e9; border: 1px solid #c3e6cb; padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+<!-- AVISO DE NUEVO SIMULADOR -->
+            <div class="banner-nuevo" style="padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px;">¡NUEVO!</span>
-                    <span class="banner-texto" style="color: #155724; font-size: 0.95rem;">Simulá en qué especialidades podrías entrar</span>
+                    <span class="badge-nuevo" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px;">¡NUEVO!</span>
+                    <span class="banner-texto" style="font-size: 0.95rem;">Simulá en qué especialidades podrías entrar</span>
                 </div>
-                <a href="#tarjetaSimulador" style="background: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap;">Ir al Simulador </a>
+                <a href="#tarjetaSimulador" class="btn-banner" style="padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap;">Ir al Simulador </a>
             </div>
+
             <!-- AVISO DE COMENTARIOS -->
-            <div class="banner-nuevo" style="background: #e8f5e9; border: 1px solid #c3e6cb; padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div class="banner-nuevo" style="padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="banner-texto" style="color: #155724; font-size: 0.95rem;">Reportar error o dejar sugerencia</span>
+                    <span class="banner-texto" style="font-size: 0.95rem;">Reportar error o dejar sugerencia</span>
                 </div>
-                <a href="#comentar" style="background: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap;">Sugerir </a>
+                <a href="#comentar" class="btn-banner" style="padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap;">Sugerir </a>
             </div>
             
             <div class="card-opcion">
@@ -473,18 +491,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="loading" class="loader">Conectando con la base de datos...</div>
         <div id="errorBox" class="error"></div>
     </div>
-    <!-- APARTADO DE COMENTARIOS / SUGERENCIAS -->
-    <div id="comentar" class="card-opcion" style="margin-top: 30px; padding: 1.5rem; background-color: #e8f4fd; border: 1px solid #b8daff;">
-        <h4 style="color: #004085; margin-top: 0; display: flex; align-items: center; gap: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            Dejanos tu Comentario o Sugerencia
-        </h4>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <textarea id="textoComentario" rows="3" placeholder="Escribe tu mensaje aquí..." style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; resize: vertical;"></textarea>
-            <button id="btnEnviarComentario" style="width: auto; padding: 0.75rem 1.5rem; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; align-self: flex-end; margin: 0;">Enviar Comentario</button>
-        </div>
-        <div id="mensajeComentarioEstado" style="display: none; margin-top: 10px; font-size: 0.9rem; font-weight: bold;"></div>
-    </div>
+<!-- APARTADO DE COMENTARIOS / SUGERENCIAS -->
+            <div id="comentar" class="card-opcion caja-comentarios" style="margin-top: 30px; padding: 1.5rem;">
+                <h4 class="titulo-comentarios" style="margin-top: 0; display: flex; align-items: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Dejanos tu Comentario o Sugerencia
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <textarea id="textoComentario" rows="3" placeholder="Escribe tu mensaje aquí..." style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; resize: vertical;"></textarea>
+                    <button id="btnEnviarComentario" style="width: auto; padding: 0.75rem 1.5rem; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; align-self: flex-end; margin: 0;">Enviar Comentario</button>
+                </div>
+                <div id="mensajeComentarioEstado" style="display: none; margin-top: 10px; font-size: 0.9rem; font-weight: bold;"></div>
+            </div>
     <!-- APARTADO DE PRIVACIDAD -->
         <div class="card-opcion" style="margin-top: 30px; padding: 1.5rem; background-color: #fff9e6; border: 1px solid #ffeeba;">
             <h4 style="color: #856404; margin-top: 0; display: flex; align-items: center; gap: 8px;">
