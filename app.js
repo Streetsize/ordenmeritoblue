@@ -837,6 +837,8 @@ let chartGanancias = null;
 let chartPerdidas = null;
 function actualizarGraficosFlujo(registros) {
     const flujo = {};
+    const rutas = {}; // NUEVO: Diccionario para rastrear el camino exacto (Origen -> Destino)
+
     const limpiarEspecialidad = (texto) => {
         if (!texto) return "";
         let limpio = texto.split('(')[0].trim().toUpperCase();
@@ -847,6 +849,7 @@ function actualizarGraficosFlujo(registros) {
         if (limpio.includes("CIRUGÍA CARDIOVASCULAR")) return "CIRUGÍA CARDIOVASCULAR";
         return limpio;
     };
+    
     const formatearNombre = (texto) => {
         if (texto === "PSIQUIATRÍA") return "Psiquiatría";
         if (texto === "PEDIATRÍA Y NEO") return "Pediatría y Neo";
@@ -863,9 +866,16 @@ function actualizarGraficosFlujo(registros) {
         if (espOriginal && espActual) {
             const normOrig = limpiarEspecialidad(espOriginal);
             const normAct = limpiarEspecialidad(espActual);
+            
             if (normOrig !== normAct) {
                 flujo[normOrig] = (flujo[normOrig] || 0) - 1; 
                 flujo[normAct] = (flujo[normAct] || 0) + 1;   
+
+                // NUEVO: Guardamos la ruta de migración exacta
+                const nombreOrig = formatearNombre(normOrig);
+                const nombreAct = formatearNombre(normAct);
+                const rutaStr = `${nombreOrig} ➔ ${nombreAct}`;
+                rutas[rutaStr] = (rutas[rutaStr] || 0) + 1;
             }
         }
     });
@@ -880,6 +890,7 @@ function actualizarGraficosFlujo(registros) {
     ganancias.sort((a, b) => b.data - a.data);
     perdidas.sort((a, b) => b.data - a.data);
 
+    // DIBUJAR GRÁFICOS (Se mantiene igual)
     const ctxG = document.getElementById('chartGanancias');
     if (chartGanancias) chartGanancias.destroy();
     if (ctxG && ganancias.length > 0) {
@@ -898,6 +909,35 @@ function actualizarGraficosFlujo(registros) {
             data: { labels: perdidas.map(p => p.label), datasets: [{ label: 'Personas perdidas', data: perdidas.map(p => p.data), backgroundColor: '#e34948', borderRadius: 4 }] },
             options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', stepSize: 1 } }, y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } } } }
         });
+    }
+
+    // NUEVO: DIBUJAR DETALLE DE RUTAS
+    const divMigraciones = document.getElementById('detalleMigraciones');
+    if (divMigraciones) {
+        let htmlRutas = `<h4 class="titulo-rutas" style="margin-bottom: 15px; display:flex; align-items:center; gap:8px;">🔄 Resumen exacto de pases</h4>`;
+        htmlRutas += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
+
+        // Ordenamos las rutas para mostrar primero las que tienen más gente
+        const rutasArray = Object.entries(rutas).sort((a, b) => b[1] - a[1]);
+
+        if (rutasArray.length === 0) {
+            htmlRutas += `<p style="color: #666; font-style: italic;">Todavía no se registraron cambios de especialidad respecto a la inscripción original.</p>`;
+        } else {
+            rutasArray.forEach(([ruta, cantidad]) => {
+                const [origen, destino] = ruta.split(' ➔ ');
+                const textoPlural = cantidad === 1 ? 'médico' : 'médicos';
+                htmlRutas += `
+                    <div class="item-ruta" style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 12px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <span>De <strong style="color: #dc3545;">${origen}</strong> a <strong style="color: #2a78d6;">${destino}</strong></span>
+                        <span style="background: #6c757d; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
+                            ${cantidad} ${textoPlural}
+                        </span>
+                    </div>
+                `;
+            });
+        }
+        htmlRutas += `</div>`;
+        divMigraciones.innerHTML = htmlRutas;
     }
 }
 // ==========================================
