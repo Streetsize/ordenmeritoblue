@@ -918,7 +918,7 @@ function actualizarGraficosFlujo(registros) {
         htmlRutas += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
 
         // Ordenamos las rutas para mostrar primero las que tienen más gente
-        const rutasArray = Object.entries(rutas).sort((a, b) => b[1] - a[1]);
+        const rutasArray = Object.entries(rutas).sort((a, b) => a[0].localeCompare(b[0]));
 
         if (rutasArray.length === 0) {
             htmlRutas += `<p style="color: #666; font-style: italic;">Todavía no se registraron cambios de especialidad respecto a la inscripción original.</p>`;
