@@ -400,10 +400,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <datalist id="listaEsp"></datalist>
             </div>
             
-            <div class="form-group">
-                <label for="hospital">Hospital preferido:</label>
+            <div class="form-group" id="grupoHospital1">
+                <label id="lblHospital1" for="hospital">Hospital preferido:</label>
                 <select id="hospital" required disabled>
                     <option value="">Primero selecciona una especialidad...</option>
+                </select>
+            </div>
+            
+            <!-- EXCEPCIÓN PSIQUIATRÍA: SEGUNDO HOSPITAL -->
+            <div class="form-group" id="grupoHospital2" style="display: none;">
+                <label for="hospitalAnio2">Hospital preferido (2do Año):</label>
+                <select id="hospitalAnio2">
+                    <option value="">Selecciona el hospital para 2do año...</option>
                 </select>
             </div>
             
