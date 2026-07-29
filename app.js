@@ -382,21 +382,24 @@ document.getElementById('dniOcultarInput').addEventListener('keypress', function
 // ==========================================
 
 // 1. Helper para calcular el puntaje en vivo basado en lo que el usuario tipea
+// 1. Helper para calcular el puntaje en vivo
 function obtenerPuntajeEnVivo() {
-    if (indiceUsuarioActual === -1) return 0;
+    if (indiceUsuarioActual === -1) return null;
     const miRegistro = registrosBD[llavesBD.indexOf(indiceUsuarioActual)];
     const notaExamen = parseFloat(miRegistro.NOTA) || 0;
     
-    const promedioTxt = document.getElementById('promedio').value;
-    const promedio = promedioTxt ? parseFloat(promedioTxt.replace(',', '.')) : 8.0; 
+    const promedioTxt = document.getElementById('promedio').value.trim();
+    // ACÁ ESTÁ LA CLAVE: Si no hay nada escrito, frenamos. No inventamos el 8.0.
+    if (!promedioTxt) return null; 
     
+    const promedio = parseFloat(promedioTxt.replace(',', '.'));
     const chkMendoza = document.getElementById('estudioMendoza');
     const ptsMza = (chkMendoza && chkMendoza.checked) ? 5 : 0;
     
     return (notaExamen * 0.90) + (promedio * 0.5) + ptsMza;
 }
 
-// 2. Helper para simular el ranking dentro de un hospital específico
+// 2. Helper para simular el ranking
 function simularPuestoHospital(esp, hospNombre, esPsiquiatria, esSegundoAnio) {
     let cupos = 0;
     if (cuposPorHospital[esp] && cuposPorHospital[esp][hospNombre] !== undefined) {
@@ -408,9 +411,8 @@ function simularPuestoHospital(esp, hospNombre, esPsiquiatria, esSegundoAnio) {
         filtroHTAL = esSegundoAnio ? `${hospNombre} (2do)` : `${hospNombre} (1er)`;
     }
 
-    // Filtramos competidores reales de este hospital
     let competidores = registrosBD.filter(c => {
-        if (c.DNI && c.DNI.toString() === miDNI) return false; // Me excluyo para no duplicarme
+        if (c.DNI && c.DNI.toString() === miDNI) return false;
         if (parseFloat(c.NOTA) < 50) return false;
         if (!coincideEspecialidad(c.ESPECIALIDAD, esp)) return false;
         if (!c.HTAL) return false;
@@ -418,16 +420,16 @@ function simularPuestoHospital(esp, hospNombre, esPsiquiatria, esSegundoAnio) {
         return esPsiquiatria ? c.HTAL.includes(filtroHTAL) : coincideHospital(c.HTAL, filtroHTAL);
     });
 
-    // Me inserto virtualmente con mi puntaje en vivo
     const miPuntajeV = obtenerPuntajeEnVivo();
+    // Si la función nos devolvió null (caja vacía), devolvemos un puesto null
+    if (miPuntajeV === null) {
+        return { puesto: null, cupos: cupos }; 
+    }
+
     competidores.push({ DNI: miDNI, NOTA_FINAL: miPuntajeV }); 
-    
-    // Ordenamos de mayor a menor
     competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
     
-    // Busco en qué puesto quedé
     const miPuesto = competidores.findIndex(c => c.DNI === miDNI) + 1;
-    
     return { puesto: miPuesto, cupos: cupos };
 }
 
@@ -449,7 +451,6 @@ if (!document.getElementById('alertaHosp2')) {
 especialidadInput.addEventListener('input', function() {
     const espSelec = this.value.trim();
     
-    // Guardamos las selecciones actuales para no perderlas al repintar en vivo
     const hospGuardado1 = hospitalSelect.value;
     const hospGuardado2 = hospitalAnio2Select.value;
 
@@ -462,20 +463,21 @@ especialidadInput.addEventListener('input', function() {
         hospitalSelect.disabled = false;
         
         datosResidencias[espSelec].sort().forEach(hosp => {
-            // Cálculo 1er Año (o normal)
+            // Cálculo 1er Año
             const sim1 = simularPuestoHospital(espSelec, hosp, esPsiq, false);
             let txt1 = hosp;
-            if (sim1.cupos > 0) {
-                txt1 += sim1.puesto <= sim1.cupos ? ` (Puesto ${sim1.puesto} de ${sim1.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim1.puesto})`;
+            // Solo concatenamos el check o la cruz si hay un puesto calculado
+            if (sim1.cupos > 0 && sim1.puesto !== null) {
+                txt1 += sim1.puesto <= sim1.cupos ? ` (Lugar ${sim1.puesto} de ${sim1.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim1.puesto})`;
             }
             hospitalSelect.appendChild(new Option(txt1, hosp));
 
-            // Cálculo 2do Año (Solo para Psiquiatría)
+            // Cálculo 2do Año (Psiquiatría)
             if (esPsiq) {
                 const sim2 = simularPuestoHospital(espSelec, hosp, true, true);
                 let txt2 = hosp;
-                if (sim2.cupos > 0) {
-                    txt2 += sim2.puesto <= sim2.cupos ? ` (Puesto ${sim2.puesto} de ${sim2.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim2.puesto})`;
+                if (sim2.cupos > 0 && sim2.puesto !== null) {
+                    txt2 += sim2.puesto <= sim2.cupos ? ` (Lugar ${sim2.puesto} de ${sim2.cupos} - ✅)` : ` (Fuera de cupo - ❌ Puesto ${sim2.puesto})`;
                 }
                 hospitalAnio2Select.appendChild(new Option(txt2, hosp));
             }
@@ -489,7 +491,6 @@ especialidadInput.addEventListener('input', function() {
             lblHospital1.innerText = "Hospital preferido:";
         }
 
-        // Restauramos los valores seleccionados si siguen siendo válidos
         if (hospGuardado1 && Array.from(hospitalSelect.options).some(o => o.value === hospGuardado1)) {
             hospitalSelect.value = hospGuardado1;
         }
@@ -502,19 +503,22 @@ especialidadInput.addEventListener('input', function() {
         grupoHospital2.style.display = 'none';
     }
     
-    // Forzamos la validación de las alertas visuales debajo
     hospitalSelect.dispatchEvent(new Event('change'));
     if(esPsiq) hospitalAnio2Select.dispatchEvent(new Event('change'));
 });
 
-// 5. Función para mostrar alertas rojas si elige algo donde queda afuera
+// 5. Función de alerta roja también protegida contra el null
 function verificarAlertaHospital(selectElem, divAlerta, esp, esPsiq, esSegundoAnio) {
     if (!selectElem.value) {
         divAlerta.style.display = 'none';
         return;
     }
     const sim = simularPuestoHospital(esp, selectElem.value, esPsiq, esSegundoAnio);
-    if (sim.cupos > 0 && sim.puesto > sim.cupos) {
+    
+    // Si no hay cálculo de puesto, no mostramos ninguna alerta
+    if (sim.puesto === null) {
+        divAlerta.style.display = 'none';
+    } else if (sim.cupos > 0 && sim.puesto > sim.cupos) {
         divAlerta.innerText = `⚠️ Atención: Con tu puntaje actual quedarías en el puesto ${sim.puesto}, fuera de los ${sim.cupos} cupos disponibles.`;
         divAlerta.style.display = 'block';
     } else {
