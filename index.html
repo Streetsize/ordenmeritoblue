@@ -16,6 +16,119 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
     
     <style>
+        /* ==========================================
+           ESTILOS DEL BANNER PUBLICITARIO
+           ========================================== */
+        .banner-clases {
+            display: block;
+            text-decoration: none;
+            background: linear-gradient(135deg, #f0f7fa 0%, #e0eaf5 100%);
+            border: 1px solid #c8dbe8;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Sombra para darle profundidad */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* Efecto al pasar el mouse por encima */
+        .banner-clases:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .banner-clases-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .banner-clases-title {
+            margin: 0;
+            color: #004085;
+            font-size: 1.3rem;
+            font-weight: 900;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .badge-tutor {
+            background: #e34948;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Animación del carrusel de materias */
+        .banner-carousel-container {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #dc3545;
+            display: flex;
+            align-items: center;
+            height: 30px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .banner-carousel {
+            display: flex;
+            flex-direction: column;
+            animation: scrollText 10s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .carousel-text {
+            height: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Tiempos matemáticos para que gire y frene */
+        @keyframes scrollText {
+            0%, 15% { transform: translateY(0); }
+            25%, 40% { transform: translateY(-30px); }
+            50%, 65% { transform: translateY(-60px); }
+            75%, 90% { transform: translateY(-90px); }
+            100% { transform: translateY(-120px); }
+        }
+
+        .banner-clases-desc {
+            font-size: 0.85rem;
+            color: #555;
+            margin: 0 0 12px 0;
+            font-weight: 500;
+        }
+
+        .banner-clases-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            padding-top: 12px;
+        }
+
+        .profesor-name {
+            font-weight: bold;
+            color: #2a78d6;
+            font-size: 0.95rem;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(37,211,102,0.3);
+        }
         /* ESTILOS GENERALES (MODO CLARO POR DEFECTO) */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -179,6 +292,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         body.dark-mode .leyenda, body.dark-mode .disclaimer { color: #aaa; }
         body.dark-mode .btn-toggle-stats { background: #2a2a2a; border-color: #444; color: #66b2ff; }
         body.dark-mode .btn-toggle-stats:hover { background: #333; }
+        /* Ajustes del Banner publicitario de noche */
+        body.dark-mode .banner-clases {
+            background: linear-gradient(135deg, #112a46 0%, #1c4572 100%);
+            border-color: #2a5a8a;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .banner-clases-title { color: #66b2ff; }
+        body.dark-mode .banner-carousel-container { color: #ff6b6b; }
+        body.dark-mode .banner-clases-desc { color: #b8daff; }
+        body.dark-mode .banner-clases-footer { border-top-color: rgba(255,255,255,0.1); }
+        body.dark-mode .profesor-name { color: #89CFF0; }
+        body.dark-mode .btn-whatsapp { background: #1da851; }
 /* COLORES BASE (MODO CLARO) PARA BANNERS Y COMENTARIOS */
         .banner-nuevo { 
             background: #e8f5e9; 
@@ -270,23 +397,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         
         <!-- PASO 1: Inicio -->
         <div id="paso1">
+<!-- BANNER PUBLICITARIO CLASES PARTICULARES -->
+            <a href="https://api.whatsapp.com/send?phone=5492616006679&text=Hola%20Facundo,%20vengo%20de%20la%20página%20del%20Ranking%20de%20Residencias.%20Me%20gustaría%20consultarte%20por%20las%20clases%20particulares." target="_blank" class="banner-clases">
+                <div class="banner-clases-content">
+                    <div class="banner-clases-header">
+                        <h3 class="banner-clases-title">Clases Particulares</h3>
+                        <span class="badge-tutor">Estudiante Avanzado</span>
+                    </div>
+                    
+                    <!-- Carrusel animado de materias -->
+                    <div class="banner-carousel-container">
+                        <span style="margin-right: 8px;">📚</span>
+                        <div class="banner-carousel">
+                            <div class="carousel-text">Biología 🧬</div>
+                            <div class="carousel-text">Anatomía 🫀</div>
+                            <div class="carousel-text">Fisiología 🧠</div>
+                            <div class="carousel-text">Fisiopatología 🔬</div>
+                            <div class="carousel-text">Biología 🧬</div> <!-- Repetido para el bucle infinito -->
+                        </div>
+                    </div>
+
+                    <p class="banner-clases-desc">Preparación para exámenes • Refuerzo universitario • Clases online o presenciales</p>
+                    
+                    <div class="banner-clases-footer">
+                        <span class="profesor-name">👨‍⚕️ Facundo Schmid</span>
+                        <span class="btn-whatsapp">📲 Reservar Clase</span>
+                    </div>
+                </div>
+            </a>
             <p style="text-align: center; color: #777; margin-bottom: 2rem;">Mendoza</p>
-<!-- AVISO DE NUEVO SIMULADOR -->
+<!-- AVISO DE NUEVO SIMULADOR 
             <div class="banner-nuevo" style="padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span class="badge-nuevo" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px;">¡NUEVO!</span>
                     <span class="banner-texto" style="font-size: 0.95rem;">Simulá en qué especialidades podrías entrar</span>
                 </div>
                 <a href="#tarjetaSimulador" class="btn-banner" style="padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap;">Ir al Simulador </a>
-            </div>
+            </div> -->
 
-            <!-- AVISO DE COMENTARIOS -->
+            <!-- AVISO DE COMENTARIOS
             <div class="banner-nuevo" style="padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span class="banner-texto" style="font-size: 0.95rem;">Reportar error o dejar sugerencia</span>
                 </div>
                 <a href="#comentar" class="btn-banner" style="padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap;">Sugerir </a>
-            </div>
+            </div>  -->
             
             <div class="card-opcion">
                 <h3>Soy Postulante: Cargar mi promedio</h3>
