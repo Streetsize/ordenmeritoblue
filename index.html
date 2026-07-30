@@ -370,5 +370,26 @@
     <script src="datos_originales.js"></script>
     <script type="module" src="app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+	<!-- ==========================================
+     MODAL PEAJE (VERIFICACIÓN RÁPIDA DE ESTADO)
+     ========================================== -->
+<div id="modalPeaje" class="modal-peaje" style="display: none;">
+    <div class="modal-peaje-content">
+        <h3 style="color: #004085; margin-top: 0;">👋 ¡Bienvenido de nuevo!</h3>
+        <p style="font-size: 0.95rem; color: #555; margin-bottom: 20px;">
+            Ingresá tu DNI para ver un reporte rápido de tu estado actual en el ranking antes de ingresar.
+        </p>
+        
+        <input type="number" id="peajeDniInput" placeholder="Tu DNI sin puntos" class="input-peaje">
+        <button id="btnVerificarPeaje" class="btn-primario-peaje">Verificar mi Estado</button>
+        
+        <div id="peajeResultados" style="margin-top: 15px; display: none; text-align: left;"></div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="btnAccionPeaje" class="btn-primario-peaje" style="display: none; flex: 2;">Actualizar Datos</button>
+            <button id="btnCerrarPeaje" class="btn-secundario-peaje" style="display: none; flex: 1;">Continuar así</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
