@@ -2047,7 +2047,7 @@ function verificarEstadoPeaje() {
                 Puesto <strong>${miPuesto}</strong> para ${cuposTotales} lugares en <strong>${especialidad}</strong>.
             </div>
         `;
-        configurarBotonAccion(dni, "Cambiar Especialidad Urgente", "#dc3545");
+        configurarBotonAccion(dni, "Cambiar Especialidad", "#dc3545");
     }
 }
 
