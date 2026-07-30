@@ -195,6 +195,7 @@ let miDNI = "";
 const paso1 = document.getElementById('paso1');
 const paso2 = document.getElementById('paso2');
 const paso3 = document.getElementById('paso3');
+const anuncioClases = document.getElementById('anuncioClases');
 const loading = document.getElementById('loading');
 const errorBox = document.getElementById('errorBox');
 const resultadoFinal = document.getElementById('resultadoFinal');
@@ -664,6 +665,7 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
         mostrarCarga(false);
         paso1.style.display = 'none';
         paso3.style.display = 'block';
+        if (anuncioClases) anuncioClases.style.display = 'none';
     } catch (error) {
         mostrarError(error.message);
     }
@@ -725,6 +727,7 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
         mostrarCarga(false);
         paso1.style.display = 'none';
         paso2.style.display = 'block';
+        if (anuncioClases) anuncioClases.style.display = 'none';
 
     } catch (error) {
         mostrarError(error.message);
@@ -735,6 +738,7 @@ document.getElementById('btnSiguiente').addEventListener('click', async () => {
 document.getElementById('btnVolver').addEventListener('click', () => {
     paso2.style.display = 'none';
     paso1.style.display = 'block';
+    if (anuncioClases) anuncioClases.style.display = 'block';
     document.getElementById('btnSiguiente').disabled = false;
     errorBox.style.display = 'none';
 });
@@ -800,6 +804,7 @@ document.getElementById('btnGuardar').addEventListener('click', async () => {
         mostrarCarga(false);
         paso2.style.display = 'none';
         paso3.style.display = 'block';
+        if (anuncioClases) anuncioClases.style.display = 'none';
 
     } catch (error) {
         mostrarError("Error guardando datos: " + error.message);
