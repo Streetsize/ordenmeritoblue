@@ -1939,8 +1939,7 @@ function verificarEstadoPeaje() {
 // 2. Si no tiene promedio, le mostramos el input Y EL CHECKBOX acá mismo
     if (!promedio) {
         btnVerificar.style.display = 'none'; // Ocultamos el verificar principal
-        btnCerrar.style.display = 'block';
-        btnCerrar.innerText = 'Lo cargo más tarde';
+        btnCerrar.style.display = 'none';
 
         divResultados.innerHTML = `
             <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba;">
