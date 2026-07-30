@@ -1878,3 +1878,211 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async (
         btn.innerText = "Enviar Comentario";
     }
 });
+// ==========================================
+// LÓGICA DEL PEAJE (MODAL DE INGRESO)
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Si ya lo completó antes, no hacemos nada y lo dejamos navegar libre
+    if (localStorage.getItem('peajeDniCompletado') === 'true') {
+        return; 
+    }
+
+    // Le damos 1.5 segundos a la página para que descargue la base de datos de Firebase
+    setTimeout(() => {
+        document.getElementById('modalPeaje').style.display = 'flex';
+    }, 1500);
+});
+
+// Eventos de los botones del peaje
+document.getElementById('btnVerificarPeaje').addEventListener('click', verificarEstadoPeaje);
+document.getElementById('btnCerrarPeaje').addEventListener('click', cerrarPeaje);
+
+function cerrarPeaje() {
+    document.getElementById('modalPeaje').style.display = 'none';
+    localStorage.setItem('peajeDniCompletado', 'true');
+}
+
+function verificarEstadoPeaje() {
+    const dni = document.getElementById('peajeDniInput').value.trim();
+    if (!dni) return;
+
+    const divResultados = document.getElementById('peajeResultados');
+    const btnVerificar = document.getElementById('btnVerificarPeaje');
+    const btnAccion = document.getElementById('btnAccionPeaje');
+    const btnCerrar = document.getElementById('btnCerrarPeaje');
+    
+    divResultados.style.display = 'block';
+    
+    // Ocultamos el botón de acción secundaria por defecto en cada nuevo intento
+    btnAccion.style.display = 'none';
+
+    // 1. Buscamos al usuario y guardamos su índice para Firebase
+    const indiceDni = registrosBD.findIndex(r => r.DNI && r.DNI.toString() === dni);
+    const miRegistro = indiceDni !== -1 ? registrosBD[indiceDni] : null;
+
+    if (!miRegistro) {
+        divResultados.innerHTML = `<div style="color: #dc3545; text-align:center; font-weight:bold; padding: 10px 0;">❌ DNI no encontrado en el padrón. Revisalo.</div>`;
+        
+        // CAMBIO 1: No lo cerramos, le damos la chance de reintentar
+        btnVerificar.style.display = 'block';
+        btnVerificar.innerText = 'Volver a intentar';
+        
+        btnCerrar.style.display = 'block';
+        btnCerrar.innerText = 'Entrar sin DNI (Invitado)';
+        return;
+    }
+
+    const especialidad = miRegistro.ESPECIALIDAD || "Sin especialidad";
+    const promedio = miRegistro.PROMEDIO;
+
+// 2. Si no tiene promedio, le mostramos el input Y EL CHECKBOX acá mismo
+    if (!promedio) {
+        btnVerificar.style.display = 'none'; // Ocultamos el verificar principal
+        btnCerrar.style.display = 'block';
+        btnCerrar.innerText = 'Lo cargo más tarde';
+
+        divResultados.innerHTML = `
+            <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba;">
+                <strong style="font-size:1.1rem;">¡Aún no cargaste tu promedio!</strong><br><br>
+                Estás inscripto en <strong>${especialidad}</strong>. Ingresalo ahora para ver tu lugar en el ranking:<br><br>
+                
+                <input type="number" id="inputPromPeaje" class="input-peaje" placeholder="Ej: 8.50" min="5" max="9.9" step="0.01" style="background: white; border: 2px solid #ffc107; color: #333; margin-bottom: 10px;">
+                
+                <!-- CHECKBOX DE MENDOZA -->
+                <label style="display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 15px; cursor: pointer; color: #333; font-size: 0.95rem; font-weight: bold;">
+                    <input type="checkbox" id="checkMendozaPeaje" checked style="width: 18px; height: 18px; accent-color: #28a745;">
+                    <span>¿Egresado en Mendoza? (+0.5 pts)</span>
+                </label>
+
+                <div id="errorPromPeaje" style="color: #dc3545; font-size: 0.85rem; display: none; font-weight: bold; margin-bottom: 10px;">⚠️ El promedio debe ser entre 5 y 9.9</div>
+                
+                <button id="btnGuardarPromPeaje" class="btn-primario-peaje" style="background: #28a745;">Guardar Promedio</button>
+            </div>
+        `;
+
+        // Lógica para guardar ese promedio en vivo y calcular la NOTA FINAL
+        document.getElementById('btnGuardarPromPeaje').addEventListener('click', async () => {
+            const promTxt = document.getElementById('inputPromPeaje').value.replace(',', '.');
+            const promNum = parseFloat(promTxt);
+            const esDeMendoza = document.getElementById('checkMendozaPeaje').checked;
+            const msjError = document.getElementById('errorPromPeaje');
+
+            // Validación estricta: entre 5 y 9.9
+            if (isNaN(promNum) || promNum < 5 || promNum > 9.9) {
+                msjError.style.display = 'block';
+                return;
+            }
+            
+            msjError.style.display = 'none';
+            const btnGuardar = document.getElementById('btnGuardarPromPeaje');
+            btnGuardar.innerText = 'Guardando...';
+            btnGuardar.disabled = true;
+
+            try {
+                // Buscamos la llave real de Firebase usando el índice
+                const llaveUsuario = llavesBD[indiceDni]; 
+                
+                // CALCULAMOS LA NOTA FINAL EXACTA (Ajustá el 0.9 y 0.5 si tu fórmula es distinta)
+                const notaExamen = parseFloat(miRegistro.NOTA) || 0;
+                let calculoFinal = (notaExamen * 0.90) + (promNum * 0.5);
+                if (esDeMendoza) {
+                    calculoFinal += 5; // Sumamos el medio punto por ser local
+                }
+                calculoFinal = parseFloat(calculoFinal.toFixed(3)); // Lo dejamos prolijo con 3 decimales
+                
+                // Actualizamos directamente en Firebase TODO junto
+                await update(ref(db, 'postulantes/' + llaveUsuario), {
+                    PROMEDIO: promNum,
+                    MENDOZA: esDeMendoza,
+                    NOTA_FINAL: calculoFinal
+                });
+
+                // Lo guardamos en la memoria local para esta sesión
+                registrosBD[indiceDni].PROMEDIO = promNum;
+                registrosBD[indiceDni].MENDOZA = esDeMendoza;
+                registrosBD[indiceDni].NOTA_FINAL = calculoFinal;
+                
+                // ¡Magia! Volvemos a correr la función. Como ahora SÍ tiene promedio, le muestra su resultado de cupo real.
+                verificarEstadoPeaje();
+                
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Hubo un error de conexión al guardar.");
+                btnGuardar.innerText = 'Guardar Promedio';
+                btnGuardar.disabled = false;
+            }
+        });
+
+        return;
+    }
+
+    // 3. Si ya tiene promedio (o lo acaba de cargar recién), le mostramos el resultado
+    let competidores = registrosBD.filter(c => coincideEspecialidad(c.ESPECIALIDAD, especialidad) && parseFloat(c.NOTA) >= 50);
+    
+    // Cálculo rápido para la simulación
+    const obtenerPuntaje = (c) => c.NOTA_FINAL ? parseFloat(c.NOTA_FINAL) : ((parseFloat(c.NOTA) || 0) * 0.90) + ((parseFloat(c.PROMEDIO) || 8.0) * 0.5); 
+    
+    competidores.sort((a, b) => obtenerPuntaje(b) - obtenerPuntaje(a));
+    
+    const miPuesto = competidores.findIndex(c => c.DNI.toString() === dni) + 1;
+    const cuposTotales = cuposPorEspecialidad[especialidad] || 0;
+
+    btnVerificar.style.display = 'none';
+    btnCerrar.style.display = 'block';
+    btnCerrar.innerText = 'Cerrar y ver tablas';
+
+    if (miPuesto <= cuposTotales) {
+        divResultados.innerHTML = `
+            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb;">
+                <strong style="font-size:1.1rem;">✅ ¡Estás entrando!</strong><br><br>
+                Puesto <strong>${miPuesto}</strong> de ${cuposTotales} lugares en <strong>${especialidad}</strong>.
+            </div>
+        `;
+        configurarBotonAccion(dni, "Modificar Hospital", "#2a78d6");
+    } else {
+        divResultados.innerHTML = `
+            <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; border: 1px solid #f5c6cb;">
+                <strong style="font-size:1.1rem;">⚠️ Fuera de Cupo</strong><br><br>
+                Puesto <strong>${miPuesto}</strong> para ${cuposTotales} lugares en <strong>${especialidad}</strong>.
+            </div>
+        `;
+        configurarBotonAccion(dni, "Cambiar Especialidad Urgente", "#dc3545");
+    }
+}
+
+// Helper para mandar al usuario directamente al formulario (Paso 2)
+function configurarBotonAccion(dni, textoBtn, color) {
+    const btnAccion = document.getElementById('btnAccionPeaje');
+    const btnCerrar = document.getElementById('btnCerrarPeaje');
+    const btnVerificar = document.getElementById('btnVerificarPeaje');
+    
+    btnVerificar.style.display = 'none';
+    btnCerrar.style.display = 'block';
+    
+    btnAccion.style.display = 'block';
+    btnAccion.style.background = color;
+    btnAccion.innerText = textoBtn;
+    
+    btnAccion.onclick = () => {
+        // Cerramos el peaje
+        cerrarPeaje();
+        
+        // 1. Apuntamos EXACTAMENTE a tu input del HTML
+        const inputPrincipal = document.getElementById('dniBuscador'); 
+        if (inputPrincipal) {
+            inputPrincipal.value = dni; // Le pegamos el DNI del peaje
+        }
+        
+        // 2. Le damos 100 milisegundos al navegador para que registre el texto
+        // y luego presionamos tu botón real
+        setTimeout(() => {
+            const botonContinuar = document.getElementById('btnSiguiente'); 
+            if (botonContinuar) {
+                botonContinuar.click();
+            } else {
+                console.log("No se encontró el botón btnSiguiente.");
+            }
+        }, 100);
+    };
+}
