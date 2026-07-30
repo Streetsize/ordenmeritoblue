@@ -1998,6 +1998,11 @@ function verificarEstadoPeaje() {
                     NOTA_FINAL: calculoFinal
                 });
 
+              if (typeof registrarUso === 'function') {
+                    // Le mandamos la acción, el DNI y en los detalles qué nota puso
+                    registrarUso("PEAJE_PROMEDIO_SUPERADO", dni, "Cargó prom: " + promNum);
+                }
+
                 // Lo guardamos en la memoria local para esta sesión
                 registrosBD[indiceDni].PROMEDIO = promNum;
                 registrosBD[indiceDni].MENDOZA = esDeMendoza;
