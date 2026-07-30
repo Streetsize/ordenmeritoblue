@@ -1952,7 +1952,7 @@ function verificarEstadoPeaje() {
                 <!-- CHECKBOX DE MENDOZA -->
                 <label style="display: flex; align-items: center; gap: 8px; justify-content: center; margin-bottom: 15px; cursor: pointer; color: #333; font-size: 0.95rem; font-weight: bold;">
                     <input type="checkbox" id="checkMendozaPeaje" checked style="width: 18px; height: 18px; accent-color: #28a745;">
-                    <span>¿Egresado en Mendoza? (+0.5 pts)</span>
+                    <span>¿Egresado en Mendoza?</span>
                 </label>
 
                 <div id="errorPromPeaje" style="color: #dc3545; font-size: 0.85rem; display: none; font-weight: bold; margin-bottom: 10px;">⚠️ El promedio debe ser entre 5 y 9.9</div>
