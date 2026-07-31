@@ -52,6 +52,13 @@
         <!-- PASO 1: Inicio -->
         <div id="paso1">
             <p style="text-align: center; color: #777; margin-bottom: 2rem;">Mendoza</p>
+			
+			<!-- ANUNCIO CLICKEABLE NUEVA FUNCIÓN -->
+        <a href="#seccionOrdenUnico" class="caja-comentarios" style="display: block; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; margin-bottom: 25px; border: 1px solid; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <strong class="titulo-comentarios" style="font-size: 1.05rem;">
+                NUEVO: Orden de Mérito Único
+            </strong>
+        </a>
 
             <div class="card-opcion">
                 <h3>Soy Postulante: Cargar mi promedio</h3>
@@ -70,6 +77,18 @@
                     <datalist id="listaEspLibre"></datalist>
                 </div>
                 <button id="btnVerLibre" class="btn-secondary">Ir directo al Ranking</button>
+            </div>
+			
+				<div id="seccionOrdenUnico" class="card-opcion" style="scroll-margin-top: 20px;">
+                <h3>Orden de Mérito Único</h3>
+                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+                    Buscá tu DNI para ver tu posición general en la provincia contra <strong>todos los postulantes</strong>.
+                </p>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="dniOrdenUnico">Ingresá tu DNI (sin puntos):</label>
+                    <input type="number" id="dniOrdenUnico" placeholder="Ej: 38123456">
+                </div>
+                <button id="btnVerOrdenUnico" class="btn-secondary">Ver mi puesto general</button>
             </div>
 
             <!-- Barra de Progreso de Participación -->
@@ -106,6 +125,7 @@
             </div>
 
             <div style="height: 20px; width: 100%; clear: both;"></div>
+			
 
             <!-- BOTÓN PARA DESPLEGAR GRÁFICOS Y ESTADÍSTICAS -->
             <button type="button" id="btnToggleEstadisticas" class="btn-toggle-stats">
