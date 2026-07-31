@@ -219,6 +219,11 @@ window.onload = async function() {
         "FARMACIA", "KINESIOLOGÍA", "NUTRICIÓN", "ODONTOLOGÍA", 
         "ODONTOPEDIATRÍA", "PSICOLOGÍA", "TRABAJO SOCIAL"
     ];
+	
+	// ==========================================
+    // NUEVO: Agregamos el Orden Único al menú de Visitantes
+    listaEspLibre.appendChild(new Option("🏆 ORDEN DE MÉRITO ÚNICO (Todas las especialidades)", "🏆 ORDEN DE MÉRITO ÚNICO (Todas las especialidades)"));
+    // ==========================================
 
     especialidades.forEach(esp => {
         // Filtramos para asegurarnos de que sea Primer Nivel y NO esté en la lista negra
@@ -594,6 +599,11 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
 
     const tbody = document.querySelector('#tablaCompetidores tbody');
     tbody.innerHTML = '';
+	// RESTAURAR LA TABLA LUEGO DE USAR EL ORDEN ÚNICO
+    const headerUltimaColumna = document.querySelector('#tablaCompetidores thead tr th:last-child');
+    if (headerUltimaColumna) headerUltimaColumna.innerText = 'Hospital';
+    const btnToggleVista = document.getElementById('btnToggleVista');
+    if (btnToggleVista) btnToggleVista.style.display = 'block';
     
     let miPosicion = 0;
     let cuposDisponibles = cuposPorEspecialidad[especialidadABuscar] || 0;
@@ -645,7 +655,14 @@ function generarTabla(especialidadABuscar, dniSeleccionado = null) {
 
 document.getElementById('btnVerLibre').addEventListener('click', async () => {
     const espElegida = especialidadLibreInput.value.trim();
-    if (!espElegida || !datosResidencias[espElegida]) return mostrarError("Elegí o escribí una especialidad válida de la lista.");
+    
+    // Identificamos si eligió el listado global
+    const esOrdenUnico = espElegida === "🏆 ORDEN DE MÉRITO ÚNICO (Todas las especialidades)";
+
+    // Si no escribió nada, o si lo que escribió no está en la base de datos (Y TAMPOCO es el orden único), tiramos error
+    if (!espElegida || (!datosResidencias[espElegida] && !esOrdenUnico)) {
+        return mostrarError("Elegí o escribí una especialidad válida de la lista.");
+    }
 
     mostrarCarga(true);
     
@@ -656,11 +673,26 @@ document.getElementById('btnVerLibre').addEventListener('click', async () => {
         const data = snapshot.val();
         registrosBD = Array.isArray(data) ? data : Object.values(data);
         
-        generarTabla(espElegida, null);
-        registrarUso("VER_RANKING", "Visitante", espElegida);
-        
         resultadoFinal.style.display = 'none';
-        tituloTabla.innerText = `Ranking: ${espElegida}`;
+
+        if (esOrdenUnico) {
+            // LÓGICA 1: Si eligió el ranking global (Mandamos null para que no resalte a nadie)
+            generarTablaGlobal(null);
+            tituloTabla.innerText = `Listado General (Todas las especialidades)`;
+            
+            // Ocultamos la vista de hospitales porque no aplica
+            const btnToggleVista = document.getElementById('btnToggleVista');
+            if (btnToggleVista) btnToggleVista.style.display = 'none';
+            document.getElementById('vistaHospitales').style.display = 'none';
+            document.getElementById('vistaGeneral').style.display = 'block';
+            
+            if (typeof registrarUso === 'function') registrarUso("VER_RANKING_GLOBAL", "Visitante", "Visitante Global");
+        } else {
+            // LÓGICA 2: Si eligió una especialidad normal (Lo que ya tenías antes)
+            generarTabla(espElegida, null);
+            tituloTabla.innerText = `Ranking: ${espElegida}`;
+            if (typeof registrarUso === 'function') registrarUso("VER_RANKING", "Visitante", espElegida);
+        }
         
         mostrarCarga(false);
         paso1.style.display = 'none';
@@ -2090,3 +2122,126 @@ function configurarBotonAccion(dni, textoBtn, color) {
         }, 100);
     };
 }
+// ==========================================
+// NUEVO: ORDEN DE MÉRITO ÚNICO (GLOBAL)
+// ==========================================
+function generarTablaGlobal(dniSeleccionado) {
+    const NOTA_MINIMA_VISIBLE = 50; 
+    
+    // Filtramos a todos los competidores que superen la nota mínima o sean el usuario actual
+    let competidores = registrosBD.filter(p => {
+        const notaExamen = parseFloat(p.NOTA) || 0;
+        return notaExamen >= NOTA_MINIMA_VISIBLE || (dniSeleccionado && p.DNI && p.DNI.toString() === dniSeleccionado);
+    });
+
+    // Ordenamos a TODOS por puntaje de mayor a menor, sin importar especialidad
+    competidores.sort((a, b) => obtenerValorOrden(b) - obtenerValorOrden(a));
+
+    const tbody = document.querySelector('#tablaCompetidores tbody');
+    tbody.innerHTML = '';
+    
+    let miPosicion = 0;
+    const totalCompetidores = competidores.length;
+
+    competidores.forEach((c, index) => {
+        const tr = document.createElement('tr');
+        const puestoActual = index + 1;
+        
+        if (dniSeleccionado && c.DNI && c.DNI.toString() === dniSeleccionado) {
+            tr.classList.add('fila-usuario');
+            miPosicion = puestoActual;
+        }
+
+        let valorMostrado = obtenerValorOrden(c).toFixed(2);
+        let iconoEstado = c.NOTA_FINAL ? '✅' : '⏳ (Prov.)';
+        let valPromedio = c.PROMEDIO ? c.PROMEDIO : 'Est. (8.0)';
+        
+        // Extraemos la especialidad que eligió
+        let especialidadElegida = c.ESPECIALIDAD ? c.ESPECIALIDAD.split(' (')[0] : 'Sin definir'; 
+        
+        // Censura clásica (***12345)
+        let dniMostrado = censurarDNI(c);
+
+        // ==========================================
+        // MAGIA DE PRIVACIDAD: Ocultar a los últimos 100
+        // ==========================================
+        if (puestoActual > totalCompetidores - 100) {
+            // Si es el usuario que se está buscando a sí mismo, le mostramos su censura clásica
+            if (dniSeleccionado && c.DNI && c.DNI.toString() === dniSeleccionado) {
+                dniMostrado = censurarDNI(c);
+            } else {
+                // A todos los demás de los últimos 100 los ocultamos por completo
+                dniMostrado = "********"; 
+            }
+        }
+        // ==========================================
+
+        tr.innerHTML = `
+            <td><strong>${puestoActual}</strong></td>
+            <td>${dniMostrado}</td>
+            <td>${c.NOTA}</td>
+            <td>${valPromedio}</td>
+            <td><strong>${valorMostrado}</strong> <span style="font-size:0.8rem">${iconoEstado}</span></td>
+            <td style="font-size: 0.8rem; color: #555; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${especialidadElegida}">${especialidadElegida}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Cambiamos el título de la última columna de 'Hospital' a 'Especialidad'
+    const headerUltimaColumna = document.querySelector('#tablaCompetidores thead tr th:last-child');
+    if (headerUltimaColumna) headerUltimaColumna.innerText = 'Especialidad';
+
+    return { total: totalCompetidores, miPosicion: miPosicion };
+}
+
+// Evento del botón
+document.getElementById('btnVerOrdenUnico').addEventListener('click', async () => {
+    const dniIngresado = document.getElementById('dniOrdenUnico').value.trim();
+    if (!dniIngresado) return alert("Ingresá un DNI para buscarte en el listado general.");
+
+    mostrarCarga(true);
+    
+    try {
+        if (registrosBD.length === 0) {
+            const snapshot = await get(ref(db, 'postulantes'));
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                registrosBD = Array.isArray(data) ? data : Object.values(data).filter(r => r && r.DNI);
+            }
+        }
+
+        const resumen = generarTablaGlobal(dniIngresado);
+        
+        if (typeof registrarUso === 'function') registrarUso("VER_ORDEN_UNICO", dniIngresado, "");
+        
+        resultadoFinal.style.display = 'block';
+        resultadoFinal.innerHTML = `
+            <h3 style="margin-bottom: 5px;">🏆 Orden de Mérito Único Provincial</h3>
+            <p style="font-size: 1.1rem; margin-top: 0;">Tu posición general es <strong>${resumen.miPosicion} de ${resumen.total}</strong> médicos.</p>
+        `;
+        
+        tituloTabla.innerText = `Listado General (Todas las especialidades)`;
+        
+        // Ocultamos el botón de hospitales y la vista de hospitales
+        const btnToggleVista = document.getElementById('btnToggleVista');
+        if (btnToggleVista) btnToggleVista.style.display = 'none';
+        document.getElementById('vistaHospitales').style.display = 'none';
+        document.getElementById('vistaGeneral').style.display = 'block';
+
+        mostrarCarga(false);
+        paso1.style.display = 'none';
+        paso3.style.display = 'block';
+        if (anuncioClases) anuncioClases.style.display = 'none';
+
+    } catch (error) {
+        mostrarError("Hubo un error de conexión: " + error.message);
+    }
+});
+
+// Soporte para tecla Enter
+document.getElementById('dniOrdenUnico').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnVerOrdenUnico').click();
+    }
+});
