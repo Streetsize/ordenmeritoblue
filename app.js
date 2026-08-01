@@ -227,7 +227,7 @@ window.onload = async function() {
 
     especialidades.forEach(esp => {
         // Filtramos para asegurarnos de que sea Primer Nivel y NO esté en la lista negra
-        const esPrimerNivel = esp.includes("(Primer nivel)");
+        const esPrimerNivel = esp.includes("(Primer nivel)") || esp.includes("(Ambos niveles)");
         const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
         
         if (esPrimerNivel && !esNoMedica) {
@@ -1087,7 +1087,8 @@ document.getElementById('btnSimular').addEventListener('click', () => {
 
     // Iteramos solo por las especialidades de Primer Nivel
     for (const [esp, cupos] of Object.entries(cuposPorEspecialidad)) {
-        if (!esp.includes("(Primer nivel)")) continue;
+        if (!esp.includes("(Primer nivel)") && !esp.includes("(Ambos niveles)")) continue;
+
 
         const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
         if (esNoMedica) continue; 
