@@ -1608,7 +1608,7 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
         `;
     }
     
-    divRes.style.display = 'block';
+   divRes.style.display = 'block';
     divRes.innerHTML = `
         ${diagnosticoHTML}
         <h4 style="margin: 0 0 10px 0; color: inherit;">¿Cómo funciona esta auditoría?</h4>
@@ -1621,7 +1621,9 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
             <li>📉 <strong>Pisándote los talones:</strong> Hay ${cercanosAbajo} médicos con 1 a 5 correctas menos que vos.</li>
         </ul>
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color, #ccc); font-size: 0.9rem;">
-            <strong>El peso de la localía:</strong> Cada respuesta correcta en el examen vale 0.9 pts. Por ende, los 5 puntos otorgados a residentes/egresados de Mendoza equivalen matemáticamente a tener <strong>5.5 respuestas correctas adicionales</strong>.
+            <strong style="color: #0056b3;">El peso de la localía (La regla del 5.55):</strong><br> 
+            En la fórmula del Ministerio, el examen representa el 90% de la nota final, por lo que cada respuesta correcta suma <strong>0.9 puntos netos</strong>. Por otro lado, residir o estudiar en Mendoza otorga <strong>5 puntos netos</strong> directos.<br><br>
+            Si hacemos la matemática (<code>5 ÷ 0.9 = 5.55</code>), significa que un competidor de otra provincia necesita acertar <strong>6 preguntas MÁS que vos</strong> en el choice solamente para lograr empatar tu ventaja geográfica (asumiendo promedios universitarios similares).
             <br><br>
             <strong>Conclusión:</strong> Por tu nota pura de examen (ignorando otros factores), deberías estar entre el puesto #${puestoBaseMin} y #${puestoBaseMax}.<br>
             Al declarar que <strong>${esMendoza ? 'SÍ' : 'NO'}</strong> sos de Mendoza, y calculando el margen de error probabilístico de los promedios universitarios, tu posición final sufre un desplazamiento estimado, ubicándote estadísticamente entre el <strong>#${rangoMejor} y #${rangoPeor}</strong>.
