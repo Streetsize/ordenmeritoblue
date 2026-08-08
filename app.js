@@ -220,10 +220,7 @@ window.onload = async function() {
         "ODONTOPEDIATRÍA", "PSICOLOGÍA", "TRABAJO SOCIAL"
     ];
 	
-	// ==========================================
-    // NUEVO: Agregamos el Orden Único al menú de Visitantes
-    listaEspLibre.appendChild(new Option("🏆 ORDEN DE MÉRITO ÚNICO (Todas las especialidades)", "🏆 ORDEN DE MÉRITO ÚNICO (Todas las especialidades)"));
-    // ==========================================
+
 
     especialidades.forEach(esp => {
         // Filtramos para asegurarnos de que sea Primer Nivel y NO esté en la lista negra
