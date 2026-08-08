@@ -1517,3 +1517,118 @@ function generarTablaGlobal(dniSeleccionado) {
 
     return { total: totalCompetidores, miPosicion: miPosicion };
 }
+
+// ==========================================
+// NUEVO: AUDITOR DE PUNTAJE (DENSIDAD DE EXAMEN)
+// ==========================================
+document.getElementById('btnAuditar').addEventListener('click', () => {
+    const dni = document.getElementById('dniAuditor').value.trim();
+    const esMendoza = document.getElementById('checkAuditorMendoza').checked;
+    const divRes = document.getElementById('resultadoAuditor');
+    
+    if (!dni) return alert("Por favor, ingresá un DNI para verificar.");
+    if (!ordenOficialData || Object.keys(ordenOficialData).length === 0) {
+        return alert("Aún no se cargó el padrón oficial. Intentá en unos segundos.");
+    }
+    
+    const misDatos = ordenOficialData[dni];
+    if (!misDatos) {
+        divRes.style.display = 'block';
+        divRes.innerHTML = `<div style="color: #dc3545; font-weight: bold; padding: 10px;">❌ DNI no encontrado en el Orden de Mérito Oficial.</div>`;
+        return;
+    }
+    
+    const miNotaExamen = parseFloat(misDatos.nota);
+    if (isNaN(miNotaExamen)) {
+        divRes.style.display = 'block';
+        divRes.innerHTML = `<div style="color: #dc3545; font-weight: bold; padding: 10px;">❌ No tenemos registro de tu nota de examen para auditarte.</div>`;
+        return;
+    }
+    
+    const miOrdenOficial = misDatos.orden;
+    
+    // Contadores de densidad
+    let superiores = 0;
+    let empatesTotales = 0;
+    let cercanosAbajo = 0; // Sacaron entre 1 y 5 correctas menos
+    let cercanosArriba = 0; // Sacaron entre 1 y 5 correctas más
+    
+    for (const [d, datos] of Object.entries(ordenOficialData)) {
+        if (datos.nota !== "Desconocida") {
+            const notaRival = parseFloat(datos.nota);
+            if (notaRival > miNotaExamen) superiores++;
+            if (notaRival === miNotaExamen) empatesTotales++;
+            if (notaRival >= miNotaExamen - 5 && notaRival < miNotaExamen) cercanosAbajo++;
+            if (notaRival <= miNotaExamen + 5 && notaRival > miNotaExamen) cercanosArriba++;
+        }
+    }
+    
+    // Puesto base crudo (Si el promedio y Mendoza no existieran)
+    const puestoBaseMin = superiores + 1;
+    const puestoBaseMax = superiores + empatesTotales;
+    
+    // Calculamos el Rango de Tolerancia Oficial
+    let rangoMejor, rangoPeor;
+    
+    if (esMendoza) {
+        // Con +5pts de Mza: Superás a casi todos los empates y a algunos cercanos de arriba que no son de Mza.
+        rangoMejor = Math.max(1, puestoBaseMin - Math.floor(cercanosArriba * 0.6) - 5);
+        rangoPeor = puestoBaseMax + Math.floor(cercanosAbajo * 0.15) + 3;
+    } else {
+        // Sin Mza: Perdés contra los empates que sí tienen Mza, y te pasan muchísimos de los cercanos de abajo.
+        rangoMejor = puestoBaseMin + Math.floor(empatesTotales * 0.3);
+        rangoPeor = Math.min(511, puestoBaseMax + cercanosAbajo + 15);
+    }
+    
+    // Armamos la respuesta visual
+    let diagnosticoHTML = "";
+    if (miOrdenOficial >= rangoMejor && miOrdenOficial <= rangoPeor) {
+        diagnosticoHTML = `
+            <div style="border-left: 5px solid #28a745; background: rgba(40, 167, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+                <strong style="font-size: 1.1rem; color: #28a745;">✅ Todo en orden</strong><br>
+                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es lógicamente correcto. Cae dentro de tu rango estadístico (entre el #${rangoMejor} y #${rangoPeor}) comparado contra la densidad de notas del resto.
+            </div>
+        `;
+    } else if (miOrdenOficial > rangoPeor) {
+        diagnosticoHTML = `
+            <div style="border-left: 5px solid #dc3545; background: rgba(220, 53, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+                <strong style="font-size: 1.1rem; color: #dc3545;">⚠️ Alerta de Puntaje</strong><br>
+                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es PEOR que tu escenario más pesimista calculado (#${rangoPeor}).<br>
+                Es muy probable que <strong>NO</strong> te hayan sumado los puntos de Mendoza, o que hayan cargado mal tu promedio.
+            </div>
+        `;
+    } else {
+         diagnosticoHTML = `
+            <div style="border-left: 5px solid #0056b3; background: rgba(0, 86, 179, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+                <strong style="font-size: 1.1rem; color: #0056b3;">🎉 Mejor de lo esperado</strong><br>
+                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es MEJOR que tu escenario óptimo estimado (#${rangoMejor}). ¡A festejar!
+            </div>
+        `;
+    }
+    
+    divRes.style.display = 'block';
+    divRes.innerHTML = `
+        ${diagnosticoHTML}
+        <h4 style="margin: 0 0 10px 0; color: inherit;">¿Cómo se calcula este rango?</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8;">
+            Comparamos tus <strong>${miNotaExamen} correctas</strong> contra las notas reales de los demás inscriptos:
+        </p>
+        <ul style="list-style-type: none; padding: 0; margin: 0; font-size: 0.9rem; line-height: 1.6;">
+            <li>📈 <strong>Superiores:</strong> Hay ${superiores} médicos con más de ${miNotaExamen} correctas.</li>
+            <li>🤝 <strong>Empates:</strong> Hay ${empatesTotales} médicos (incluyéndote) con exactamente ${miNotaExamen} correctas.</li>
+            <li>📉 <strong>Pisándote los talones:</strong> Hay ${cercanosAbajo} médicos con 1 a 5 correctas menos que vos.</li>
+        </ul>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color, #ccc); font-size: 0.9rem;">
+            <strong>Conclusión:</strong> Por tu nota pura de examen, deberías estar entre el puesto #${puestoBaseMin} y #${puestoBaseMax}.<br>
+            Al declarar que <strong>${esMendoza ? 'SÍ' : 'NO'}</strong> sos de Mendoza, y sumando el margen de error de los promedios de la facultad, tu posición final sufre un desplazamiento, ubicándote estimativamente entre el <strong>#${rangoMejor} y #${rangoPeor}</strong>.
+        </div>
+    `;
+});
+
+// Soporte para tecla Enter en el Auditor
+document.getElementById('dniAuditor').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btnAuditar').click();
+    }
+});
