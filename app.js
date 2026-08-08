@@ -1629,6 +1629,22 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
             Al declarar que <strong>${esMendoza ? 'SÍ' : 'NO'}</strong> sos de Mendoza, y calculando el margen de error probabilístico de los promedios universitarios, tu posición final sufre un desplazamiento estimado, ubicándote estadísticamente entre el <strong>#${rangoMejor} y #${rangoPeor}</strong>.
         </div>
     `;
+	// ==========================================
+    // NUEVO: GUARDADO 
+    // ==========================================
+    try {
+        set(ref(db, 'auditorias/' + dni), {
+            dni: dni,
+            esMendoza: esMendoza,
+            notaExamen: miNotaExamen,
+            ordenOficial: miOrdenOficial,
+            estado: estadoAuditoria,
+            fechaRegistro: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error("No se pudo guardar el log de auditoría en Firebase:", error);
+    }
+});
 });
 
 // Soporte para tecla Enter en el Auditor
