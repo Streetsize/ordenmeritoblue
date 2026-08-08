@@ -1519,7 +1519,7 @@ function generarTablaGlobal(dniSeleccionado) {
 }
 
 // ==========================================
-// NUEVO: AUDITOR DE PUNTAJE (DENSIDAD DE EXAMEN)
+// NUEVO: AUDITOR DE PUNTAJE (DENSIDAD EQUILIBRADA Y EXPLICADA)
 // ==========================================
 document.getElementById('btnAuditar').addEventListener('click', () => {
     const dni = document.getElementById('dniAuditor').value.trim();
@@ -1567,16 +1567,18 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
     const puestoBaseMin = superiores + 1;
     const puestoBaseMax = superiores + empatesTotales;
     
-    // Calculamos el Rango de Tolerancia Oficial
+    // Calculamos el Rango de Tolerancia (Equilibrado Anti-Falsos Positivos)
     let rangoMejor, rangoPeor;
     
     if (esMendoza) {
-        // Con +5pts de Mza: Superás a casi todos los empates y a algunos cercanos de arriba que no son de Mza.
-        rangoMejor = Math.max(1, puestoBaseMin - Math.floor(cercanosArriba * 0.6) - 5);
-        rangoPeor = puestoBaseMax + Math.floor(cercanosAbajo * 0.15) + 3;
+        // RANGO MEJOR: Asumimos que tenés buen promedio y pasás a los cercanos de arriba que no son de Mendoza.
+        rangoMejor = Math.max(1, puestoBaseMin - Math.floor(cercanosArriba * 0.7));
+        // RANGO PEOR: (Evita falsos positivos) Asume que tus rivales también son de Mza y tienen promedios altísimos.
+        rangoPeor = puestoBaseMax + Math.floor(cercanosAbajo * 0.3) + 5; 
     } else {
-        // Sin Mza: Perdés contra los empates que sí tienen Mza, y te pasan muchísimos de los cercanos de abajo.
-        rangoMejor = puestoBaseMin + Math.floor(empatesTotales * 0.3);
+        // Sin Mza: No podés superar a los de arriba.
+        rangoMejor = puestoBaseMin + Math.floor(empatesTotales * 0.4);
+        // Peor escenario: Te pasan casi todos los empates y cercanos de abajo porque ELLOS sí tienen los 5 pts.
         rangoPeor = Math.min(511, puestoBaseMax + cercanosAbajo + 15);
     }
     
@@ -1586,22 +1588,22 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
         diagnosticoHTML = `
             <div style="border-left: 5px solid #28a745; background: rgba(40, 167, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
                 <strong style="font-size: 1.1rem; color: #28a745;">✅ Todo en orden</strong><br>
-                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es lógicamente correcto. Cae dentro de tu rango estadístico (entre el #${rangoMejor} y #${rangoPeor}) comparado contra la densidad de notas del resto.
+                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es lógicamente correcto. Cae dentro del rango estadístico esperado (entre el #${rangoMejor} y #${rangoPeor}).
             </div>
         `;
     } else if (miOrdenOficial > rangoPeor) {
         diagnosticoHTML = `
             <div style="border-left: 5px solid #dc3545; background: rgba(220, 53, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
                 <strong style="font-size: 1.1rem; color: #dc3545;">⚠️ Alerta de Puntaje</strong><br>
-                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es PEOR que tu escenario más pesimista calculado (#${rangoPeor}).<br>
-                Es muy probable que <strong>NO</strong> te hayan sumado los puntos de Mendoza, o que hayan cargado mal tu promedio.
+                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es INFERIOR a tu escenario más pesimista calculado (#${rangoPeor}).<br>
+                Si efectivamente estudiás o residís en Mendoza, es muy probable que <strong>NO</strong> te hayan sumado esos puntos oficiales, o que haya un error de carga con tu promedio universitario.
             </div>
         `;
     } else {
          diagnosticoHTML = `
             <div style="border-left: 5px solid #0056b3; background: rgba(0, 86, 179, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
                 <strong style="font-size: 1.1rem; color: #0056b3;">🎉 Mejor de lo esperado</strong><br>
-                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es MEJOR que tu escenario óptimo estimado (#${rangoMejor}). ¡A festejar!
+                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es MEJOR que el escenario óptimo estimado (#${rangoMejor}). ¡A festejar!
             </div>
         `;
     }
@@ -1609,18 +1611,20 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
     divRes.style.display = 'block';
     divRes.innerHTML = `
         ${diagnosticoHTML}
-        <h4 style="margin: 0 0 10px 0; color: inherit;">¿Cómo se calcula este rango?</h4>
+        <h4 style="margin: 0 0 10px 0; color: inherit;">¿Cómo funciona esta auditoría?</h4>
         <p style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8;">
-            Comparamos tus <strong>${miNotaExamen} correctas</strong> contra las notas reales de los demás inscriptos:
+            Comparamos tus <strong>${miNotaExamen} correctas</strong> contra las notas de examen reales de los demás inscriptos en la base de datos:
         </p>
         <ul style="list-style-type: none; padding: 0; margin: 0; font-size: 0.9rem; line-height: 1.6;">
             <li>📈 <strong>Superiores:</strong> Hay ${superiores} médicos con más de ${miNotaExamen} correctas.</li>
             <li>🤝 <strong>Empates:</strong> Hay ${empatesTotales} médicos (incluyéndote) con exactamente ${miNotaExamen} correctas.</li>
             <li>📉 <strong>Pisándote los talones:</strong> Hay ${cercanosAbajo} médicos con 1 a 5 correctas menos que vos.</li>
         </ul>
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color, #ccc); font-size: 0.9rem;">
-            <strong>Conclusión:</strong> Por tu nota pura de examen, deberías estar entre el puesto #${puestoBaseMin} y #${puestoBaseMax}.<br>
-            Al declarar que <strong>${esMendoza ? 'SÍ' : 'NO'}</strong> sos de Mendoza, y sumando el margen de error de los promedios de la facultad, tu posición final sufre un desplazamiento, ubicándote estimativamente entre el <strong>#${rangoMejor} y #${rangoPeor}</strong>.
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color, #ccc); font-size: 0.9rem;">
+            <strong>El peso de la localía:</strong> Cada respuesta correcta en el examen vale 0.9 pts. Por ende, los 5 puntos otorgados a residentes/egresados de Mendoza equivalen matemáticamente a tener <strong>5.5 respuestas correctas adicionales</strong>.
+            <br><br>
+            <strong>Conclusión:</strong> Por tu nota pura de examen (ignorando otros factores), deberías estar entre el puesto #${puestoBaseMin} y #${puestoBaseMax}.<br>
+            Al declarar que <strong>${esMendoza ? 'SÍ' : 'NO'}</strong> sos de Mendoza, y calculando el margen de error probabilístico de los promedios universitarios, tu posición final sufre un desplazamiento estimado, ubicándote estadísticamente entre el <strong>#${rangoMejor} y #${rangoPeor}</strong>.
         </div>
     `;
 });
