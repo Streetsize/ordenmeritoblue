@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, update, push, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
@@ -1397,8 +1397,6 @@ function registrarUso(accion, dniUsuario, detalles = "") {
 // ==========================================
 // SISTEMA DE COMENTARIOS (CON TRACKING SILENCIOSO)
 // ==========================================
-import { set, ref as dbRef } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
 document.getElementById('btnEnviarComentario').addEventListener('click', async () => {
     const textoInput = document.getElementById('textoComentario').value.trim();
     const cajaEstado = document.getElementById('mensajeComentarioEstado');
@@ -1419,7 +1417,8 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async (
         // Buscamos si ya tiene un DNI validado en el navegador, si no, le ponemos Anónimo
         const dniSilencioso = localStorage.getItem('miDniValidado') || "Anónimo";
 
-        const comentariosRef = dbRef(db, 'comentarios');
+        // Usamos el ref global que importamos arriba
+        const comentariosRef = ref(db, 'comentarios'); 
         const nuevoComentarioRef = push(comentariosRef);
 
         await set(nuevoComentarioRef, {
@@ -1520,7 +1519,7 @@ function generarTablaGlobal(dniSeleccionado) {
 // ==========================================
 // NUEVO: AUDITOR DE PUNTAJE (DENSIDAD EQUILIBRADA Y EXPLICADA)
 // ==========================================
-document.getElementById('btnAuditar').addEventListener('click', () => {
+document.getElementById('btnAuditar').addEventListener('click', async () => {
     const dni = document.getElementById('dniAuditor').value.trim();
     const esMendoza = document.getElementById('checkAuditorMendoza').checked;
     const divRes = document.getElementById('resultadoAuditor');
@@ -1638,7 +1637,7 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
     // NUEVO: GUARDADO EN FIREBASE
     // ==========================================
     try {
-        set(ref(db, 'auditorias/' + dni), {
+        await set(ref(db, 'auditorias/' + dni), {
             dni: dni,
             esMendoza: esMendoza,
             notaExamen: miNotaExamen,
