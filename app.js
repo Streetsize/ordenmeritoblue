@@ -1517,7 +1517,6 @@ function generarTablaGlobal(dniSeleccionado) {
 
     return { total: totalCompetidores, miPosicion: miPosicion };
 }
-
 // ==========================================
 // NUEVO: AUDITOR DE PUNTAJE (DENSIDAD EQUILIBRADA Y EXPLICADA)
 // ==========================================
@@ -1582,9 +1581,12 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
         rangoPeor = Math.min(511, puestoBaseMax + cercanosAbajo + 15);
     }
     
-    // Armamos la respuesta visual
+    // Armamos la respuesta visual y definimos el estado para Firebase
     let diagnosticoHTML = "";
+    let estadoAuditoria = ""; // <-- ACÁ ESTÁ LA VARIABLE QUE FALTABA
+
     if (miOrdenOficial >= rangoMejor && miOrdenOficial <= rangoPeor) {
+        estadoAuditoria = "OK";
         diagnosticoHTML = `
             <div style="border-left: 5px solid #28a745; background: rgba(40, 167, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
                 <strong style="font-size: 1.1rem; color: #28a745;">✅ Todo en orden</strong><br>
@@ -1592,6 +1594,7 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
             </div>
         `;
     } else if (miOrdenOficial > rangoPeor) {
+        estadoAuditoria = "ANOMALIA";
         diagnosticoHTML = `
             <div style="border-left: 5px solid #dc3545; background: rgba(220, 53, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
                 <strong style="font-size: 1.1rem; color: #dc3545;">⚠️ Alerta de Puntaje</strong><br>
@@ -1600,6 +1603,7 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
             </div>
         `;
     } else {
+         estadoAuditoria = "MEJOR";
          diagnosticoHTML = `
             <div style="border-left: 5px solid #0056b3; background: rgba(0, 86, 179, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
                 <strong style="font-size: 1.1rem; color: #0056b3;">🎉 Mejor de lo esperado</strong><br>
@@ -1608,7 +1612,7 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
         `;
     }
     
-   divRes.style.display = 'block';
+    divRes.style.display = 'block';
     divRes.innerHTML = `
         ${diagnosticoHTML}
         <h4 style="margin: 0 0 10px 0; color: inherit;">¿Cómo funciona esta auditoría?</h4>
@@ -1629,8 +1633,9 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
             Al declarar que <strong>${esMendoza ? 'SÍ' : 'NO'}</strong> sos de Mendoza, y calculando el margen de error probabilístico de los promedios universitarios, tu posición final sufre un desplazamiento estimado, ubicándote estadísticamente entre el <strong>#${rangoMejor} y #${rangoPeor}</strong>.
         </div>
     `;
-	// ==========================================
-    // NUEVO: GUARDADO 
+
+    // ==========================================
+    // NUEVO: GUARDADO EN FIREBASE
     // ==========================================
     try {
         set(ref(db, 'auditorias/' + dni), {
@@ -1644,8 +1649,8 @@ document.getElementById('btnAuditar').addEventListener('click', () => {
     } catch (error) {
         console.error("No se pudo guardar el log de auditoría en Firebase:", error);
     }
-});
-});
+}); 
+// <-- ACÁ REMOVÍ EL }); EXTRA QUE ROMPÍA TODO
 
 // Soporte para tecla Enter en el Auditor
 document.getElementById('dniAuditor').addEventListener('keypress', function (e) {
