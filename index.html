@@ -34,17 +34,6 @@
         </button>
     </div>
     
-    <!-- ANUNCIO: Clases particulares -->
-    <a href="https://wa.me/5492616006679?text=Hola%20Facundo!%20Vi%20tu%20anuncio%20en%20el%20simulador%20de%20residencias%20y%20quer%C3%ADa%20consultarte%20por%20clases%20particulares."
-       target="_blank" rel="noopener noreferrer" class="anuncio-adsense" id="anuncioClases">
-        <div class="anuncio-contenido">
-            <span class="anuncio-etiqueta">Anuncio</span>
-            <div class="anuncio-info">
-                <strong>Facundo Schmid</strong> · Clases particulares
-                <p>Fisiología · Fisiopatología · Anatomía y Más... (estudiante avanzado)</p>
-            </div>
-        </div>
-    </a>
 
     <div class="container">
         <h2>Ranking Residencias 2026</h2>
@@ -54,7 +43,7 @@
             <p style="text-align: center; color: #777; margin-bottom: 2rem;">Mendoza</p>
 
             <div class="card-opcion">
-                <h3>Soy Postulante: Cargar mi promedio</h3>
+                <h3>Soy Postulante: Simular hospital y especialidad</h3>
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="dniBuscador">Ingresá tu DNI (sin puntos):</label>
                     <input type="text" id="dniBuscador" required placeholder="Ej: 38123456" pattern="[0-9]+">
@@ -73,138 +62,15 @@
             </div>
 			
 
-            <!-- Barra de Progreso de Participación -->
-            <div class="progress-wrapper">
-                <p class="progress-text" style="margin-bottom: 8px;">
-                    📊 Participación actual: <strong><span id="textoPorcentaje">...</span>%</strong> de los promedios cargados
-                </p>
-                
-                <!-- Contenedor de la barra con la línea del 80% -->
-                <div class="progress-bg">
-                    <div class="progress-goal-line" title="Objetivo: 70% (Muestra confiable)"></div>
-                    <div id="barraProgreso" class="progress-bar"></div>
-                </div>
-                
-                <p style="font-size: 0.8rem; color: #666; text-align: center; margin-top: 6px;">
-                    <strong>Meta de confiabilidad (70%):</strong> Necesitamos alcanzar esta marca para que las proyecciones de corte sean estadísticamente más confiables.
-                </p>
-            </div>
+  
             <div style="height: 40px; width: 100%; clear: both;"></div>
-            
-            <!-- NUEVO: SIMULADOR DE INGRESO -->
-            <div id="tarjetaSimulador" class="card-opcion" style="border-left: 4px solid #28a745; margin-top: 2.5rem; scroll-margin-top: 20px;">
-                <h3 style="color: #28a745;">¿A qué especialidad puedo ingresar?</h3>
-                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
-                    Simulá en qué especialidades de <strong>Primer Nivel</strong> entrarías directo en el cupo con tu puntaje actual.
-                </p>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="dniSimulador" placeholder="Ingresá tu DNI (Ej: 38123456)" pattern="[0-9]+" style="flex: 1; margin: 0;">
-                        <button id="btnSimular" class="btn-primary" style="width: auto; margin: 0; background-color: #28a745;">Simular</button>
-                    </div>
-                </div>
-                <div id="resultadosSimulacion" style="display: none; margin-top: 15px;"></div>
-            </div>
-
-            <div style="height: 20px; width: 100%; clear: both;"></div>
 			
+</div>
 
-            <!-- BOTÓN PARA DESPLEGAR GRÁFICOS Y ESTADÍSTICAS -->
-            <button type="button" id="btnToggleEstadisticas" class="btn-toggle-stats">
-                <span id="txtToggleEstadisticas">📊 Ver gráficos y estadísticas del examen</span>
-                <span class="flecha">▼</span>
-            </button>
 
-            <div id="seccionEstadisticas" class="seccion-colapsable">
-                <!-- INICIO DE GRÁFICOS DE ESPECIALIDADES DIVIDIDOS -->
-                <div style="max-width: 800px; margin: 40px auto; padding: 0 15px;">
-                    <h3 style="font-family: Arial, sans-serif; color: #2c3e50; text-align: center; margin-bottom: 30px;">
-                        Evolución de Preferencias: Elección Inicial vs. Elección Actual
-                    </h3>
-
-                    <!-- GRÁFICO 1: GANANCIAS (Azul) -->
-                    <h4 style="font-family: Arial, sans-serif; color: #2a78d6; margin-bottom: 10px; text-align: center;">Especialidades que sumaron inscriptos</h4>
-                    <div style="position: relative; width: 100%; height: 350px; margin-bottom: 40px;">
-                        <canvas id="chartGanancias"></canvas>
-                    </div>
-
-                    <!-- GRÁFICO 2: PÉRDIDAS (Rojo) -->
-                    <h4 style="font-family: Arial, sans-serif; color: #e34948; margin-bottom: 10px; text-align: center;">Especialidades que perdieron inscriptos</h4>
-                    <div style="position: relative; width: 100%; height: 400px; margin-bottom: 15px;">
-                        <canvas id="chartPerdidas"></canvas>
-                    </div>
-
-                    <div id="detalleMigraciones" style="margin-top: 30px;"></div>
-                    
-                    <p style="font-family: Arial, sans-serif; font-size: 12px; color: #898781; text-align: center;">
-                        *Sin variación de inscriptos: Cirugía General, Neurología, Oftalmología.
-                    </p>
-                </div>
-
-                <!-- NUEVO APARTADO DE ESTADÍSTICAS DEL EXAMEN -->
-                <div class="card-opcion" style="margin: 40px auto; padding: 20px;">
-                    <h3 style="font-family: Arial, sans-serif; text-align: center; margin-bottom: 25px;">
-                        Estadísticas Generales del Examen
-                    </h3>
-                    
-                    <div style="display: flex; flex-wrap: wrap; justify-content: space-around; text-align: center; margin-bottom: 30px; gap: 10px;">
-                        <div style="padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; flex: 1 1 25%; min-width: 120px;" class="stat-box">
-                            <h4 style="margin: 0; color: #333;" class="stat-title">Alumnos</h4>
-                            <p style="font-size: 1.8rem; font-weight: bold; color: #0056b3; margin: 5px 0;">511</p>
-                        </div>
-                        <div style="padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; flex: 1 1 25%; min-width: 120px;" class="stat-box">
-                            <h4 style="margin: 0; color: #333;" class="stat-title">Promedio</h4>
-                            <p style="font-size: 1.8rem; font-weight: bold; color: #17a2b8; margin: 5px 0;">79.32</p>
-                        </div>
-                        <div style="padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; flex: 1 1 25%; min-width: 120px;" class="stat-box">
-                            <h4 style="margin: 0; color: #333;" class="stat-title">Nota Máxima</h4>
-                            <p style="font-size: 1.8rem; font-weight: bold; color: #28a745; margin: 5px 0;">95</p>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 35px; gap: 15px;">
-                        <div style="flex: 1 1 45%; min-width: 250px;">
-                            <h4 style="color: #2a78d6; margin-bottom: 10px;">Especialidades más elegidas</h4>
-                            <ul style="list-style-type: none; padding: 0; line-height: 1.8; font-size: 0.95rem;">
-                                <li><strong>1. Anestesiología:</strong> 65 alumnos</li>
-                                <li><strong>2. Cardiología:</strong> 48 alumnos</li>
-                                <li><strong>3. Oftalmología:</strong> 48 alumnos</li>
-                                <li><strong>4. Dermatología:</strong> 36 alumnos</li>
-                                <li><strong>5. Psiquiatría Clínica:</strong> 35 alumnos</li>
-                            </ul>
-                        </div>
-                        <div style="flex: 1 1 45%; min-width: 250px;">
-                            <h4 style="color: #e34948; margin-bottom: 10px;">Especialidades menos elegidas</h4>
-                            <ul style="list-style-type: none; padding: 0; line-height: 1.8; font-size: 0.95rem;">
-                                <li><strong>1. Neumonología:</strong> 3 alumnos</li>
-                                <li><strong>2. Pediatría y Ter. Intensiva:</strong> 3 alumnos</li>
-                                <li><strong>3. Fisiatría:</strong> 3 alumnos</li>
-                                <li><strong>4. Emergentología:</strong> 2 alumnos</li>
-                                <li><strong>5. Nefrología:</strong> 2 alumnos</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <h4 style="font-family: Arial, sans-serif; margin-bottom: 15px; text-align: center; color: #17a2b8;">Distribución de Notas (Respuestas Correctas)</h4>
-                    <div style="position: relative; width: 100%; height: 350px;">
-                        <canvas id="chartDistribucion"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PASO 2: Confirmación de Datos -->
+<!-- PASO 2: Confirmación de Datos -->
         <div id="paso2">
-            <h3 style="color: #0056b3;">Actualizá tus datos</h3>
-            <div class="form-group">
-                <label>Nota del Examen (Solo lectura):</label>
-                <input type="text" id="notaExamen" readonly>
-            </div>
-            
-            <div class="form-group">
-                <label for="promedio">Promedio de la Facultad:</label>
-                <input type="text" id="promedio" required placeholder="Ej: 8.5 o 8,5">
-            </div>
+            <h3 style="color: #0056b3;">Registrar mi elección</h3>
             
             <div class="form-group">
                 <label for="especialidad">Especialidad definitiva:</label>
@@ -226,12 +92,7 @@
                 </select>
             </div>
             
-            <div class="form-group checkbox-group">
-                <input type="checkbox" id="estudioMendoza" checked>
-                <label for="estudioMendoza" style="margin-bottom: 0;">Soy egresado de una facultad en Mendoza</label>
-            </div>
-            
-            <button id="btnGuardar" class="btn-primary">Guardar Datos y Ver Mi Posición</button>
+            <button id="btnGuardar" class="btn-primary">Guardar Datos y Ver Ranking</button>
             <button id="btnVolver" class="btn-outline">Cancelar y volver atrás</button>
         </div>
 
@@ -247,14 +108,11 @@
             <div id="vistaGeneral" style="margin-top: 1rem;">
                 <div class="table-responsive">
                     <table id="tablaCompetidores">
-                        <thead>
+						<thead>
                             <tr>
-                                <th>Pos.</th>
-                                <th>DNI</th>
-                                <th>Examen</th>
-                                <th>Promedio</th>
-                                <th>Nota Final</th>
-                                <th>Hospital</th>
+                                <th style="width: 15%;">Puesto</th>
+                                <th style="width: 25%;">DNI</th>
+                                <th style="width: 60%;">Hospital Elegido</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -262,7 +120,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="leyenda">✅ Datos confirmados | ⏳ Puntaje provisorio (solo base examen)</div>
+               
             </div>
 
             <div id="vistaHospitales" style="display: none; margin-top: 1.5rem;">
@@ -313,85 +171,8 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const ctxDistribucion = document.getElementById('chartDistribucion').getContext('2d');
-            new Chart(ctxDistribucion, {
-                type: 'bar',
-                data: {
-                    labels: ["56-57", "57-59", "59-61", "61-63", "63-65", "65-67", "67-69", "69-71", "71-73", "73-75", "75-77", "77-79", "79-81", "81-83", "83-85", "85-87", "87-89", "89-91", "91-93", "93-95"],
-                    datasets: [{
-                        label: 'Cantidad de Alumnos',
-                        data: [2, 9, 6, 8, 13, 16, 29, 18, 26, 27, 34, 44, 61, 37, 43, 42, 33, 34, 22, 7],
-                        backgroundColor: '#17a2b8',
-                        borderColor: '#117a8b',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { 
-                            beginAtZero: true,
-                            title: { display: true, text: 'Nº de Alumnos' }
-                        },
-                        x: {
-                            title: { display: true, text: 'Nota del Examen' }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                title: function(context) { return 'Nota: ' + context[0].label; },
-                                label: function(context) { return context.raw + ' alumnos'; }
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const btnToggle = document.getElementById('btnToggleEstadisticas');
-            const seccion = document.getElementById('seccionEstadisticas');
-            const txtToggle = document.getElementById('txtToggleEstadisticas');
-
-            btnToggle.addEventListener('click', function() {
-                const abierta = seccion.classList.toggle('abierta');
-                btnToggle.classList.toggle('abierta', abierta);
-                txtToggle.textContent = abierta
-                    ? '📊 Ocultar gráficos y estadísticas del examen'
-                    : '📊 Ver gráficos y estadísticas del examen';
-            });
-        });
-    </script>
     <script src="datos_originales.js"></script>
     <script type="module" src="app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-	<!-- ==========================================
-     MODAL PEAJE (VERIFICACIÓN RÁPIDA DE ESTADO)
-     ========================================== -->
-<div id="modalPeaje" class="modal-peaje" style="display: none;">
-    <div class="modal-peaje-content">
-        <h3 style="color: #004085; margin-top: 0;">👋 ¡Bienvenido de nuevo!</h3>
-        <p style="font-size: 0.95rem; color: #555; margin-bottom: 20px;">
-            Ingresá tu DNI para ver un reporte rápido de tu estado actual en el ranking antes de ingresar.
-        </p>
-        
-        <input type="number" id="peajeDniInput" placeholder="Tu DNI sin puntos" class="input-peaje">
-        <button id="btnVerificarPeaje" class="btn-primario-peaje">Verificar mi Estado</button>
-        
-        <div id="peajeResultados" style="margin-top: 15px; display: none; text-align: left;"></div>
-        
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button id="btnAccionPeaje" class="btn-primario-peaje" style="display: none; flex: 2;">Actualizar Datos</button>
-            <button id="btnCerrarPeaje" class="btn-secundario-peaje" style="display: none; flex: 1;">Continuar así</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
