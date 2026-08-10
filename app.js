@@ -464,15 +464,36 @@ especialidadInput.addEventListener('input', function() {
 });
 
 // ==========================================
-// NUEVA TABLA OFICIAL (Lee 100% de Firebase - IGNORANDO SUFIJOS)
+// FUNCIÓN PARA LIMPIAR LOS ERRORES DE TIPEO DEL MINISTERIO
+// ==========================================
+function unificarEspecialidad(texto) {
+    if (!texto) return "";
+    // 1. Quitamos tildes, lo pasamos a mayúsculas y cortamos el paréntesis
+    let limpio = texto.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split('(')[0].trim();
+    // 2. Limpiamos basura del Excel del Ministerio (ej. el tilde en CIRUGÍA CARDIOVASCULAR ´)
+    limpio = limpio.replace(/´/g, "").replace(/'/g, "").trim();
+    
+    // 3. Emparejamos los nombres que escribieron por la mitad
+    if (limpio.includes("PSIQUIATRIA CLINICA INTERDISCIPLINARIA")) return "PSIQUIATRIA ADULTOS";
+    if (limpio.startsWith("CIRUGIA CARDIOVASCULAR")) return "CIRUGIA CARDIOVASCULAR";
+    if (limpio.startsWith("PEDIATRIA Y NEONATOLOGIA")) return "PEDIATRIA Y NEO";
+    if (limpio.startsWith("PEDIATRIA Y TERAPIA")) return "PEDIATRIA Y UTI";
+    if (limpio.startsWith("ORTOPEDIA Y TRAUMATOLOGIA PEDIATRICA")) return "TRAUMATO PEDIATRICA";
+    if (limpio.startsWith("ORTOPEDIA Y TRAUMATOLOGIA")) return "TRAUMATOLOGIA GENERAL";
+    
+    return limpio;
+}
+
+// ==========================================
+// NUEVA TABLA OFICIAL (Lee 100% de Firebase - A PRUEBA DE ERRORES)
 // ==========================================
 async function generarTablaOficial(especialidadElegida, dniResaltado) {
     const tbody = document.querySelector('#tablaCompetidores tbody');
     tbody.innerHTML = '';
     tituloTabla.innerText = `Ranking Oficial: ${especialidadElegida}`;
 
-    // Limpiamos la especialidad elegida (ej. "ANESTESIOLOGÍA (Primer nivel)" -> "ANESTESIOLOGÍA")
-    const baseElegida = especialidadElegida.split('(')[0].trim().toUpperCase();
+    // Normalizamos la especialidad que eligió el usuario en el select
+    const baseElegida = unificarEspecialidad(especialidadElegida);
 
     try {
         const snapshot = await get(ref(db, 'postulantes'));
@@ -487,10 +508,10 @@ async function generarTablaOficial(especialidadElegida, dniResaltado) {
             const datosFb = postulantesFirebase[key];
             
             if (datosFb && datosFb.DNI && datosFb.ESPECIALIDAD) {
-                // Limpiamos también la especialidad de Firebase para compararlas en igualdad de condiciones
-                const baseFB = datosFb.ESPECIALIDAD.split('(')[0].trim().toUpperCase();
+                // Normalizamos la especialidad sucia que viene de Firebase
+                const baseFB = unificarEspecialidad(datosFb.ESPECIALIDAD);
                 
-                // Ahora sí, coinciden los 53 sin importar el paréntesis
+                // Ahora la comparación es perfecta y a prueba de tildes o recortes
                 if (baseFB === baseElegida) {
                     const dniReal = datosFb.DNI.toString();
                     
@@ -502,7 +523,7 @@ async function generarTablaOficial(especialidadElegida, dniResaltado) {
                     competidores.push({
                         puesto: puestoReal,
                         dni: dniReal,
-                        hospital: datosFb.HTAL ? datosFb.HTAL : "-",
+                        hospital: datosFb.HTAL ? datosFb.HTAL : "⏳ A confirmar",
                         oculto: datosFb.OCULTO ? true : false
                     });
                 }
