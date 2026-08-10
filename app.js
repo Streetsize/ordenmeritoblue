@@ -523,7 +523,7 @@ async function generarTablaOficial(especialidadElegida, dniResaltado) {
                     competidores.push({
                         puesto: puestoReal,
                         dni: dniReal,
-                        hospital: datosFb.HTAL ? datosFb.HTAL : "⏳ A confirmar",
+                        hospital: datosFb.HTAL ? datosFb.HTAL : "-",
                         oculto: datosFb.OCULTO ? true : false
                     });
                 }
