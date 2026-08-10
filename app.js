@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, update, push, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, child, update, push, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
@@ -464,58 +464,63 @@ especialidadInput.addEventListener('input', function() {
 });
 
 // ==========================================
-// NUEVA TABLA OFICIAL (Lee de JSON + Firebase)
+// NUEVA TABLA OFICIAL (Lee 100% de Firebase - IGNORANDO SUFIJOS)
 // ==========================================
 async function generarTablaOficial(especialidadElegida, dniResaltado) {
     const tbody = document.querySelector('#tablaCompetidores tbody');
     tbody.innerHTML = '';
     tituloTabla.innerText = `Ranking Oficial: ${especialidadElegida}`;
 
+    // Limpiamos la especialidad elegida (ej. "ANESTESIOLOGÍA (Primer nivel)" -> "ANESTESIOLOGÍA")
+    const baseElegida = especialidadElegida.split('(')[0].trim().toUpperCase();
+
     try {
         const snapshot = await get(ref(db, 'postulantes'));
-        let postulantesFirebase = {};
-        if (snapshot.exists()) {
-            postulantesFirebase = snapshot.val();
+        if (!snapshot.exists()) {
+            return mostrarError("No se encontraron postulantes en la base de datos.");
         }
-
+        
+        const postulantesFirebase = snapshot.val();
         let competidores = [];
 
-        // Cruzamos Firebase con el JSON Oficial usando el DNI real
-        for (const [key, datosFb] of Object.entries(postulantesFirebase)) {
-            if (datosFb.ESPECIALIDAD === especialidadElegida && datosFb.DNI) {
-                const dniReal = datosFb.DNI.toString();
-                let datosOficiales = ordenOficialData[dniReal];
+        for (const key of Object.keys(postulantesFirebase)) {
+            const datosFb = postulantesFirebase[key];
+            
+            if (datosFb && datosFb.DNI && datosFb.ESPECIALIDAD) {
+                // Limpiamos también la especialidad de Firebase para compararlas en igualdad de condiciones
+                const baseFB = datosFb.ESPECIALIDAD.split('(')[0].trim().toUpperCase();
                 
-                // Si no está en el JSON oficial, lo mandamos al fondo
-                let puesto = datosOficiales ? datosOficiales.orden : 999; 
+                // Ahora sí, coinciden los 53 sin importar el paréntesis
+                if (baseFB === baseElegida) {
+                    const dniReal = datosFb.DNI.toString();
+                    
+                    let puestoReal = 999;
+                    if (ordenOficialData && ordenOficialData[dniReal] && ordenOficialData[dniReal].orden) {
+                        puestoReal = ordenOficialData[dniReal].orden;
+                    }
 
-                competidores.push({
-                    puesto: puesto,
-                    dni: dniReal,
-                    hospital: datosFb.HTAL || "⏳ Sin hospital",
-					oculto: datosFb.OCULTO
-                });
+                    competidores.push({
+                        puesto: puestoReal,
+                        dni: dniReal,
+                        hospital: datosFb.HTAL ? datosFb.HTAL : "-",
+                        oculto: datosFb.OCULTO ? true : false
+                    });
+                }
             }
         }
 
-        // Ordenamos estrictamente por el Puesto Oficial
         competidores.sort((a, b) => a.puesto - b.puesto);
 
-// 3.5 Buscamos cuántos cupos totales tiene esta especialidad en la provincia
         const totalCupos = cuposPorEspecialidad[especialidadElegida] || 0;
 
-        // 4. Dibujamos las filas
         competidores.forEach((c, index) => {
             const tr = document.createElement('tr');
-            
             const puestoEspecialidad = index + 1;
             
-            // Aplicamos las clases CSS de colores (verde para usuario, rojo para afuera, borde rojo para el corte)
             if (c.dni === dniResaltado) tr.classList.add('fila-usuario');
             if (totalCupos > 0 && puestoEspecialidad > totalCupos) tr.classList.add('fila-afuera');
             if (totalCupos > 0 && puestoEspecialidad === totalCupos + 1) tr.classList.add('fila-corte');
             
-// Censura (Ocultar si es privado, últimos 100, o censura clásica)
             let dniCensurado;
             if (c.oculto === true && c.dni !== dniResaltado) {
                 dniCensurado = "Privado 🔒";
@@ -525,10 +530,8 @@ async function generarTablaOficial(especialidadElegida, dniResaltado) {
                 dniCensurado = c.dni === dniResaltado ? c.dni : "***" + c.dni.slice(-5);
             }
 
-            // Armamos la celda de la posición
             let contenidoPos = `<strong style="font-size: 1.15rem; color: #0056b3;">#${puestoEspecialidad}</strong><br><span style="font-size: 0.75rem; color: #666;" title="Orden de Mérito Global">(Global: #${c.puesto})</span>`;
             
-            // Si es el primer postulante que se queda afuera, le pegamos la etiqueta
             if (totalCupos > 0 && puestoEspecialidad === totalCupos + 1) {
                 contenidoPos += `<br><span class="etiqueta-corte" style="margin-top:4px; display:inline-block;">Límite Cupos</span>`;
             }
@@ -541,8 +544,8 @@ async function generarTablaOficial(especialidadElegida, dniResaltado) {
             tbody.appendChild(tr);
         });
 
-		await generarDesglosPorHospitales(especialidadElegida, dniResaltado);
-	
+        await generarDesglosPorHospitales(especialidadElegida, dniResaltado);
+    
     } catch (error) {
         console.error("Error al generar tabla", error);
         mostrarError("Hubo un error al armar el ranking oficial.");
