@@ -251,10 +251,15 @@ window.onload = async function() {
         const esPrimerNivel = esp.includes("(Primer nivel)") || esp.includes("(Ambos niveles)");
         const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
         
+		const listaEspAdj = document.getElementById('listaEspAdj');
+        const listaEspVerAdj = document.getElementById('listaEspVerAdj');
+
         if (esPrimerNivel && !esNoMedica) {
-            // Se agregan las opciones limpias a AMBOS selectores
+            // Se agregan las opciones a todos los selectores de la aplicacion
             listaEsp.appendChild(new Option(esp, esp));
             listaEspLibre.appendChild(new Option(esp, esp));
+            if (listaEspAdj) listaEspAdj.appendChild(new Option(esp, esp));
+            if (listaEspVerAdj) listaEspVerAdj.appendChild(new Option(esp, esp));
         }
     });
 
@@ -856,6 +861,7 @@ const cuposPorHospital = {
     "ANESTESIOLOGÍA (Primer nivel)": {
         "Hospital Central": 4,
         "Hospital Luis Lagomaggiore": 2,
+		"Hospital Teodoro Schestakow": 2
     },
     "AUDIOLOGÍA (Primer nivel)": {
         "Xeltahuina - OSEP": 2
@@ -1540,145 +1546,305 @@ function generarTablaGlobal(dniSeleccionado) {
 
     return { total: totalCompetidores, miPosicion: miPosicion };
 }
+
+
 // ==========================================
-// NUEVO: AUDITOR DE PUNTAJE (DENSIDAD EQUILIBRADA Y EXPLICADA)
+// LOGICA DE ADJUDICACIONES EN VIVO
 // ==========================================
-document.getElementById('btnAuditar').addEventListener('click', async () => {
-    const dni = document.getElementById('dniAuditor').value.trim();
-    const esMendoza = document.getElementById('checkAuditorMendoza').checked;
-    const divRes = document.getElementById('resultadoAuditor');
-    
-    if (!dni) return alert("Por favor, ingresá un DNI para verificar.");
-    if (!ordenOficialData || Object.keys(ordenOficialData).length === 0) {
-        return alert("Aún no se cargó el padrón oficial. Intentá en unos segundos.");
-    }
-    
-    const misDatos = ordenOficialData[dni];
-    if (!misDatos) {
-        divRes.style.display = 'block';
-        divRes.innerHTML = `<div style="color: #dc3545; font-weight: bold; padding: 10px;">❌ DNI no encontrado en el Orden de Mérito Oficial.</div>`;
-        return;
-    }
-    
-    const miNotaExamen = parseFloat(misDatos.nota);
-    if (isNaN(miNotaExamen)) {
-        divRes.style.display = 'block';
-        divRes.innerHTML = `<div style="color: #dc3545; font-weight: bold; padding: 10px;">❌ No tenemos registro de tu nota de examen para auditarte.</div>`;
-        return;
-    }
-    
-    const miOrdenOficial = misDatos.orden;
-    
-    // Contadores de densidad
-    let superiores = 0;
-    let empatesTotales = 0;
-    let cercanosAbajo = 0; // Sacaron entre 1 y 5 correctas menos
-    let cercanosArriba = 0; // Sacaron entre 1 y 5 correctas más
-    
-    for (const [d, datos] of Object.entries(ordenOficialData)) {
-        if (datos.nota !== "Desconocida") {
-            const notaRival = parseFloat(datos.nota);
-            if (notaRival > miNotaExamen) superiores++;
-            if (notaRival === miNotaExamen) empatesTotales++;
-            if (notaRival >= miNotaExamen - 5 && notaRival < miNotaExamen) cercanosAbajo++;
-            if (notaRival <= miNotaExamen + 5 && notaRival > miNotaExamen) cercanosArriba++;
+
+// ---> VARIABLE DE CONTROL DIARIO <---
+// Cambiá este número para habilitar a más personas cada día.
+// Representa el tope del Ranking Global autorizado a cargar hoy.
+const LIMITE_ADJUDICACION_DIARIA = 20; 
+
+const dniAdjudicacionInput = document.getElementById('dniAdjudicacion');
+const btnValidarAdjudicacion = document.getElementById('btnValidarAdjudicacion');
+const formAdjudicacion = document.getElementById('formAdjudicacion');
+const espAdjudicadaInput = document.getElementById('espAdjudicada');
+const hospAdjudicadoSelect = document.getElementById('hospAdjudicado');
+const hospAdjudicado2Select = document.getElementById('hospAdjudicado2');
+const grupoHospAdj2 = document.getElementById('grupoHospAdj2');
+const lblHospAdj1 = document.getElementById('lblHospAdj1');
+const btnGuardarAdjudicacion = document.getElementById('btnGuardarAdjudicacion');
+const msgAdjudicacion = document.getElementById('msgAdjudicacion');
+
+if (btnValidarAdjudicacion) {
+    btnValidarAdjudicacion.addEventListener('click', () => {
+        const dni = dniAdjudicacionInput.value.trim();
+        if (!dni) return alert("Por favor ingresa un DNI valido.");
+        
+        if (!ordenOficialData || Object.keys(ordenOficialData).length === 0) {
+            return alert("Aun no se ha cargado el padron oficial. Intenta en unos segundos.");
         }
-    }
-    
-    // Puesto base crudo (Si el promedio y Mendoza no existieran)
-    const puestoBaseMin = superiores + 1;
-    const puestoBaseMax = superiores + empatesTotales;
-    
-    // Calculamos el Rango de Tolerancia (Equilibrado Anti-Falsos Positivos)
-    let rangoMejor, rangoPeor;
-    
-    if (esMendoza) {
-        // RANGO MEJOR: Asumimos que tenés buen promedio y pasás a los cercanos de arriba que no son de Mendoza.
-        rangoMejor = Math.max(1, puestoBaseMin - Math.floor(cercanosArriba * 0.7));
-        // RANGO PEOR: (Evita falsos positivos) Asume que tus rivales también son de Mza y tienen promedios altísimos.
-        rangoPeor = puestoBaseMax + Math.floor(cercanosAbajo * 0.3) + 5; 
-    } else {
-        // Sin Mza: No podés superar a los de arriba.
-        rangoMejor = puestoBaseMin + Math.floor(empatesTotales * 0.4);
-        // Peor escenario: Te pasan casi todos los empates y cercanos de abajo porque ELLOS sí tienen los 5 pts.
-        rangoPeor = Math.min(511, puestoBaseMax + cercanosAbajo + 15);
-    }
-    
-    // Armamos la respuesta visual y definimos el estado para Firebase
-    let diagnosticoHTML = "";
-    let estadoAuditoria = ""; // <-- ACÁ ESTÁ LA VARIABLE QUE FALTABA
 
-    if (miOrdenOficial >= rangoMejor && miOrdenOficial <= rangoPeor) {
-        estadoAuditoria = "OK";
-        diagnosticoHTML = `
-            <div style="border-left: 5px solid #28a745; background: rgba(40, 167, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
-                <strong style="font-size: 1.1rem; color: #28a745;">✅ Todo en orden</strong><br>
-                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es lógicamente correcto. Cae dentro del rango estadístico esperado (entre el #${rangoMejor} y #${rangoPeor}).
-            </div>
-        `;
-    } else if (miOrdenOficial > rangoPeor) {
-        estadoAuditoria = "ANOMALIA";
-        diagnosticoHTML = `
-            <div style="border-left: 5px solid #dc3545; background: rgba(220, 53, 69, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
-                <strong style="font-size: 1.1rem; color: #dc3545;">⚠️ Alerta de Puntaje</strong><br>
-                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es INFERIOR a tu escenario más pesimista calculado (#${rangoPeor}).<br>
-                Si efectivamente estudiás o residís en Mendoza, es muy probable que <strong>NO</strong> te hayan sumado esos puntos oficiales, o que haya un error de carga con tu promedio universitario.
-            </div>
-        `;
-    } else {
-         estadoAuditoria = "MEJOR";
-         diagnosticoHTML = `
-            <div style="border-left: 5px solid #0056b3; background: rgba(0, 86, 179, 0.1); padding: 12px; border-radius: 4px; margin-bottom: 15px;">
-                <strong style="font-size: 1.1rem; color: #0056b3;">🎉 Mejor de lo esperado</strong><br>
-                Tu puesto oficial (<strong>#${miOrdenOficial}</strong>) es MEJOR que el escenario óptimo estimado (#${rangoMejor}). ¡A festejar!
-            </div>
-        `;
-    }
-    
-    divRes.style.display = 'block';
-    divRes.innerHTML = `
-        ${diagnosticoHTML}
-        <h4 style="margin: 0 0 10px 0; color: inherit;">¿Cómo funciona esta auditoría?</h4>
-        <p style="font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8;">
-            Comparamos tus <strong>${miNotaExamen} correctas</strong> contra las notas de examen reales de los demás inscriptos en la base de datos:
-        </p>
-        <ul style="list-style-type: none; padding: 0; margin: 0; font-size: 0.9rem; line-height: 1.6;">
-            <li>📈 <strong>Superiores:</strong> Hay ${superiores} médicos con más de ${miNotaExamen} correctas.</li>
-            <li>🤝 <strong>Empates:</strong> Hay ${empatesTotales} médicos (incluyéndote) con exactamente ${miNotaExamen} correctas.</li>
-            <li>📉 <strong>Pisándote los talones:</strong> Hay ${cercanosAbajo} médicos con 1 a 5 correctas menos que vos.</li>
-        </ul>
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color, #ccc); font-size: 0.9rem;">
-            <strong style="color: #0056b3;">El peso de la localía (La regla del 5.55):</strong><br> 
-            En la fórmula del Ministerio, el examen representa el 90% de la nota final, por lo que cada respuesta correcta suma <strong>0.9 puntos netos</strong>. Por otro lado, residir o estudiar en Mendoza otorga <strong>5 puntos netos</strong> directos.<br><br>
-            Si hacemos la matemática (<code>5 ÷ 0.9 = 5.55</code>), significa que un competidor de otra provincia necesita acertar <strong>6 preguntas MÁS que vos</strong> en el choice solamente para lograr empatar tu ventaja geográfica (asumiendo promedios universitarios similares).
-            <br><br>
-            <strong>Conclusión:</strong> Por tu nota pura de examen (ignorando otros factores), deberías estar entre el puesto #${puestoBaseMin} y #${puestoBaseMax}.<br>
-            Al declarar que <strong>${esMendoza ? 'SÍ' : 'NO'}</strong> sos de Mendoza, y calculando el margen de error probabilístico de los promedios universitarios, tu posición final sufre un desplazamiento estimado, ubicándote estadísticamente entre el <strong>#${rangoMejor} y #${rangoPeor}</strong>.
-        </div>
-    `;
+        // Verificamos si existe en el padron oficial
+        if (ordenOficialData[dni]) {
+            const puestoGlobal = ordenOficialData[dni].orden;
 
-    // ==========================================
-    // NUEVO: GUARDADO EN FIREBASE
-    // ==========================================
-    try {
-        await set(ref(db, 'auditorias/' + dni), {
-            dni: dni,
-            esMendoza: esMendoza,
-            notaExamen: miNotaExamen,
-            ordenOficial: miOrdenOficial,
-            estado: estadoAuditoria,
-            fechaRegistro: new Date().toISOString()
-        });
-    } catch (error) {
-        console.error("No se pudo guardar el log de auditoría en Firebase:", error);
-    }
-}); 
-// <-- ACÁ REMOVÍ EL }); EXTRA QUE ROMPÍA TODO
+            // Verificamos si su puesto está dentro de los habilitados para hoy
+            if (puestoGlobal <= LIMITE_ADJUDICACION_DIARIA) {
+                btnValidarAdjudicacion.innerText = "DNI Validado Exitosamente";
+                btnValidarAdjudicacion.style.backgroundColor = "#6c757d";
+                btnValidarAdjudicacion.style.borderColor = "#6c757d";
+                btnValidarAdjudicacion.disabled = true;
+                dniAdjudicacionInput.disabled = true;
+                formAdjudicacion.style.display = 'block';
+            } else {
+                alert(`Tu puesto en el ranking global es el #${puestoGlobal}.\n\nHoy solo están habilitados para cargar su elección los postulantes hasta el puesto #${LIMITE_ADJUDICACION_DIARIA}. ¡Pronto será tu turno!`);
+            }
+        } else {
+            alert("El DNI ingresado no figura en el Orden de Merito oficial del Ministerio.");
+        }
+    });
+}
 
-// Soporte para tecla Enter en el Auditor
-document.getElementById('dniAuditor').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('btnAuditar').click();
-    }
-});
+// Desplegar hospitales y validar logica de Psiquiatria al escribir la especialidad
+if (espAdjudicadaInput) {
+    espAdjudicadaInput.addEventListener('input', function() {
+        const espSelec = this.value.trim();
+        hospAdjudicadoSelect.innerHTML = '<option value="">Selecciona un hospital...</option>';
+        if (hospAdjudicado2Select) hospAdjudicado2Select.innerHTML = '<option value="">Selecciona un hospital para 2do año...</option>';
+        
+        const esPsiq = (espSelec === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)");
+
+        if (datosResidencias[espSelec]) {
+            hospAdjudicadoSelect.disabled = false;
+            
+            datosResidencias[espSelec].sort().forEach(hosp => {
+                hospAdjudicadoSelect.appendChild(new Option(hosp, hosp));
+                if (esPsiq && hospAdjudicado2Select) hospAdjudicado2Select.appendChild(new Option(hosp, hosp));
+            });
+
+            // Mostramos u ocultamos el segundo select dependiendo de la especialidad
+            if (esPsiq) {
+                grupoHospAdj2.style.display = 'block';
+                lblHospAdj1.innerText = "Hospital adjudicado (1er Año):";
+            } else {
+                grupoHospAdj2.style.display = 'none';
+                lblHospAdj1.innerText = "Hospital adjudicado:";
+            }
+        } else {
+            hospAdjudicadoSelect.disabled = true;
+            grupoHospAdj2.style.display = 'none';
+        }
+    });
+}
+
+// Guardar la adjudicacion 
+if (btnGuardarAdjudicacion) {
+    btnGuardarAdjudicacion.addEventListener('click', async () => {
+        const dni = dniAdjudicacionInput.value.trim();
+        const especialidad = espAdjudicadaInput.value.trim();
+        let hospital = hospAdjudicadoSelect.value;
+        const esPsiq = (especialidad === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)");
+
+        if (!especialidad || !hospital) {
+            return alert("Debes seleccionar obligatoriamente una especialidad y un hospital.");
+        }
+
+        if (esPsiq) {
+            const hospitalAnio2 = hospAdjudicado2Select.value;
+            if (!hospitalAnio2) return alert("Para Psiquiatria debes elegir un hospital para el 1er año y otro para el 2do año.");
+            hospital = `${hospital} (1er) / ${hospitalAnio2} (2do)`;
+        }
+
+        btnGuardarAdjudicacion.disabled = true;
+        btnGuardarAdjudicacion.innerText = "Registrando...";
+
+        try {
+            await set(ref(db, 'adjudicaciones/' + dni), {
+                especialidad: especialidad,
+                hospital: hospital,
+                fecha: new Date().toISOString()
+            });
+
+            formAdjudicacion.style.display = 'none';
+            msgAdjudicacion.style.display = 'block';
+            msgAdjudicacion.style.color = '#155724';
+            msgAdjudicacion.innerText = "Adjudicacion registrada exitosamente. Esta informacion permanece privada y solo contribuye al contador de cupos.";
+            
+            if (typeof registrarUso === 'function') registrarUso("CARGA_ADJUDICACION", dni, especialidad);
+            
+        } catch (error) {
+            alert("Hubo un error al guardar: " + error.message);
+            btnGuardarAdjudicacion.disabled = false;
+            btnGuardarAdjudicacion.innerText = "Guardar Adjudicacion";
+        }
+    });
+}
+
+// ==========================================
+// VISOR PUBLICO DE ADJUDICACIONES (MODO TABLERO PLEGABLE)
+// ==========================================
+const btnAbrirTableroCupos = document.getElementById('btnAbrirTableroCupos');
+const btnCerrarTablero = document.getElementById('btnCerrarTablero');
+const paso4 = document.getElementById('paso4');
+
+if (btnCerrarTablero) {
+    btnCerrarTablero.addEventListener('click', () => {
+        paso4.style.display = 'none';
+        paso1.style.display = 'block';
+    });
+}
+
+if (btnAbrirTableroCupos) {
+    btnAbrirTableroCupos.addEventListener('click', async () => {
+        mostrarCarga(true);
+        
+        try {
+            // Hacemos un solo llamado a Firebase para construir todo el tablero
+            const snapshot = await get(ref(db, 'adjudicaciones'));
+            const adjudicaciones = snapshot.exists() ? snapshot.val() : {};
+
+		const contenedor = document.getElementById('contenedorAcordeonesCupos');
+            contenedor.innerHTML = '';
+
+            // 0. Filtramos para excluir Segundo Nivel y Carreras no medicas
+            const carrerasNoMedicas = [
+                "AUDIOLOGÍA", "BIOQUÍMICA", "ENDODONCIA", "ENFERMERÍA", 
+                "FARMACIA", "KINESIOLOGÍA", "NUTRICIÓN", "ODONTOLOGÍA", 
+                "ODONTOPEDIATRÍA", "PSICOLOGÍA", "TRABAJO SOCIAL"
+            ];
+
+            let especialidades = Object.keys(cuposPorHospital).sort();
+            
+            especialidades = especialidades.filter(esp => {
+                const esPrimerNivel = esp.includes("(Primer nivel)") || esp.includes("(Ambos niveles)");
+                const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
+                return esPrimerNivel && !esNoMedica;
+            });
+
+            especialidades.forEach(esp => {
+                const esPsiq = (esp === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)");
+                let conteoPorHospital = {};
+                
+                // 1. Contamos las adjudicaciones solo para esta especialidad en el bucle
+                for (const key in adjudicaciones) {
+                    if (adjudicaciones[key].especialidad === esp) {
+                        const hosp = adjudicaciones[key].hospital;
+                        
+                        if (esPsiq && hosp.includes(" (1er) / ")) {
+                            // Separar los hospitales de 1er y 2do año
+                            const partes = hosp.split(" (1er) / ");
+                            const hosp1 = partes[0] + " (1er Año)";
+                            const hosp2 = partes[1].replace(" (2do)", " (2do Año)");
+                            conteoPorHospital[hosp1] = (conteoPorHospital[hosp1] || 0) + 1;
+                            conteoPorHospital[hosp2] = (conteoPorHospital[hosp2] || 0) + 1;
+                        } else {
+                            conteoPorHospital[hosp] = (conteoPorHospital[hosp] || 0) + 1;
+                        }
+                    }
+                }
+
+                // 2. Preparamos las tarjetas internas de hospitales
+                const cuposDeEsp = cuposPorHospital[esp] || {};
+                let tarjetasAGenerar = [];
+
+                if (esPsiq) {
+                    for (const hospBase in cuposDeEsp) {
+                        tarjetasAGenerar.push({ nombre: `${hospBase} (1er Año)`, cupos: cuposDeEsp[hospBase] });
+                        tarjetasAGenerar.push({ nombre: `${hospBase} (2do Año)`, cupos: cuposDeEsp[hospBase] });
+                    }
+                } else {
+                    for (const hospBase in cuposDeEsp) {
+                        tarjetasAGenerar.push({ nombre: hospBase, cupos: cuposDeEsp[hospBase] });
+                    }
+                    // Manejo de discrepancias (hospitales cargados que no esten en el diccionario)
+                    for (const hospCargado in conteoPorHospital) {
+                        if (!cuposDeEsp[hospCargado]) {
+                            tarjetasAGenerar.push({ nombre: hospCargado, cupos: '?' });
+                        }
+                    }
+                }
+
+                tarjetasAGenerar.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+				// 3. Calculamos la suma total para ponerla en la cabecera del acordeon
+                // Usamos el total oficial de la provincia, evitando duplicar cupos en Psiquiatria
+                let totalCuposEsp = cuposPorEspecialidad[esp] || 0;
+                let totalAdjudicadosEsp = 0;
+                
+                // Contamos a las personas fisicas unicas, ignorando cuantas tarjetas generen
+                for (const key in adjudicaciones) {
+                    if (adjudicaciones[key].especialidad === esp) {
+                        totalAdjudicadosEsp++;
+                    }
+                }
+
+                // 4. Creamos el boton principal del acordeon
+                const btnToggle = document.createElement('button');
+                btnToggle.className = 'btn-toggle-stats';
+                btnToggle.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                        <span style="text-align: left; flex: 1; font-size: 0.95rem;">${esp}</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 0.85rem; background: rgba(0,0,0,0.08); padding: 3px 8px; border-radius: 12px; color: inherit; white-space: nowrap;">
+                                ${totalAdjudicadosEsp} / ${totalCuposEsp}
+                            </span>
+                            <span class="flecha" style="font-size: 0.8rem;">▼</span>
+                        </div>
+                    </div>
+                `;
+                
+                // 5. Creamos el contenedor colapsable con los hospitales
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'seccion-colapsable';
+                
+                let htmlHosp = `<div style="margin-top: 5px; margin-bottom: 15px; display:flex; flex-direction:column; gap:6px;">`;
+                
+                if (tarjetasAGenerar.length === 0) {
+                    htmlHosp += `<p style="color: #666; font-size: 0.9rem; padding: 10px;">No hay hospitales definidos.</p>`;
+                } else {
+                    tarjetasAGenerar.forEach(tarjeta => {
+                        const cuposTotal = tarjeta.cupos;
+                        const adjudicados = conteoPorHospital[tarjeta.nombre] || 0;
+                        
+                        let colorEstado = '#28a745'; // Libre (Verde)
+                        if (cuposTotal !== '?' && adjudicados >= cuposTotal) {
+                            colorEstado = '#dc3545'; // Lleno (Rojo)
+                        } else if (adjudicados > 0) {
+                            colorEstado = '#fd7e14'; // Llenandose (Naranja)
+                        }
+
+                        htmlHosp += `
+                            <div class="card-opcion" style="margin-bottom:0; padding:10px 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid ${colorEstado}; border-radius: 4px;">
+                                <span style="font-weight: 500; font-size: 0.9rem;">${tarjeta.nombre}</span>
+                                <span style="font-weight: bold; font-size: 0.85rem; color: ${colorEstado}; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px; white-space: nowrap;">
+                                    Elegidos: ${adjudicados} / ${cuposTotal}
+                                </span>
+                            </div>
+                        `;
+                    });
+                }
+                htmlHosp += `</div>`;
+                contentDiv.innerHTML = htmlHosp;
+
+                // 6. Asignamos el evento para desplegar/plegar
+                btnToggle.addEventListener('click', () => {
+                    const estaAbierto = btnToggle.classList.contains('abierta');
+                    
+                    if (!estaAbierto) {
+                        btnToggle.classList.add('abierta');
+                        contentDiv.classList.add('abierta');
+                    } else {
+                        btnToggle.classList.remove('abierta');
+                        contentDiv.classList.remove('abierta');
+                    }
+                });
+
+                contenedor.appendChild(btnToggle);
+                contenedor.appendChild(contentDiv);
+            });
+
+            document.getElementById('paso1').style.display = 'none';
+            paso4.style.display = 'block';
+
+            if (typeof registrarUso === 'function') registrarUso("VER_TABLERO_CUPOS", "Visitante");
+
+        } catch (error) {
+            mostrarError("Error al descargar los datos en tiempo real: " + error.message);
+        }
+        
+        mostrarCarga(false);
+    });
+}
