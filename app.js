@@ -1166,7 +1166,7 @@ const cuposPorHospital = {
         "Clínica del Prado": 2,
         "Hospital Alfredo Perrupato": 1,
         "Hospital Carlos Pereyra": 5,
-        "Hospital Carlos Saporiti": 2,
+        "Hospital Carlos Saporiti": 3,
         "Hospital Central": 3,
         "Hospital El Sauce": 5,
         "Hospital Luis Lagomaggiore": 3,
