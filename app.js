@@ -1691,15 +1691,41 @@ if (btnAbrirTableroCupos) {
     btnAbrirTableroCupos.addEventListener('click', async () => {
         mostrarCarga(true);
         
-        try {
-            // Hacemos un solo llamado a Firebase para construir todo el tablero
+		try {
+            // Descargamos la lista que subio el scraper de Python
             const snapshot = await get(ref(db, 'adjudicaciones'));
-            const adjudicaciones = snapshot.exists() ? snapshot.val() : {};
+            const adjudicacionesBrutas = snapshot.exists() ? snapshot.val() : {};
 
-		const contenedor = document.getElementById('contenedorAcordeonesCupos');
+            // 1. Extraemos y mostramos la hora de actualizacion
+            const elementoTexto = document.getElementById('textoActualizacion');
+            if (adjudicacionesBrutas.ultima_actualizacion) {
+                // Al pasar el UTC a new Date(), JS lo convierte automáticamente a la hora de Argentina
+                const fechaObj = new Date(adjudicacionesBrutas.ultima_actualizacion);
+                const horaLocal = fechaObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                elementoTexto.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span> Sincronizado con InfoSalud a las <b>${horaLocal}</b>`;
+            } else {
+                elementoTexto.innerText = "Sincronizado con InfoSalud (Hora no disponible)";
+            }
+
+            // 2. Reagrupamos la lista plana en la estructura que necesita el Tablero
+            const adjudicacionesOficiales = {};
+            for (const key in adjudicacionesBrutas) {
+                // IMPORTANTÍSIMO: Saltamos las llaves de metadata para no romper el código
+                if (key === "ultima_actualizacion" || key === "estado") continue;
+                
+                const item = adjudicacionesBrutas[key];
+                if (item && item.especialidad && item.hospital) {
+                    if (!adjudicacionesOficiales[item.especialidad]) {
+                        adjudicacionesOficiales[item.especialidad] = {};
+                    }
+                    adjudicacionesOficiales[item.especialidad][item.hospital] = 
+                        (adjudicacionesOficiales[item.especialidad][item.hospital] || 0) + item.adjudicados;
+                }
+            }
+
+            const contenedor = document.getElementById('contenedorAcordeonesCupos');
             contenedor.innerHTML = '';
 
-            // 0. Filtramos para excluir Segundo Nivel y Carreras no medicas
             const carrerasNoMedicas = [
                 "AUDIOLOGÍA", "BIOQUÍMICA", "ENDODONCIA", "ENFERMERÍA", 
                 "FARMACIA", "KINESIOLOGÍA", "NUTRICIÓN", "ODONTOLOGÍA", 
@@ -1708,6 +1734,8 @@ if (btnAbrirTableroCupos) {
 
             let especialidades = Object.keys(cuposPorHospital).sort();
             
+            // ... [EL RESTO DE LA FUNCIÓN SIGUE EXACTAMENTE IGUAL DESDE AQUÍ] ...
+            
             especialidades = especialidades.filter(esp => {
                 const esPrimerNivel = esp.includes("(Primer nivel)") || esp.includes("(Ambos niveles)");
                 const esNoMedica = carrerasNoMedicas.some(carrera => esp.includes(carrera));
@@ -1715,63 +1743,30 @@ if (btnAbrirTableroCupos) {
             });
 
             especialidades.forEach(esp => {
-                const esPsiq = (esp === "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)");
-                let conteoPorHospital = {};
-                
-                // 1. Contamos las adjudicaciones solo para esta especialidad en el bucle
-                for (const key in adjudicaciones) {
-                    if (adjudicaciones[key].especialidad === esp) {
-                        const hosp = adjudicaciones[key].hospital;
-                        
-                        if (esPsiq && hosp.includes(" (1er) / ")) {
-                            // Separar los hospitales de 1er y 2do año
-                            const partes = hosp.split(" (1er) / ");
-                            const hosp1 = partes[0] + " (1er Año)";
-                            const hosp2 = partes[1].replace(" (2do)", " (2do Año)");
-                            conteoPorHospital[hosp1] = (conteoPorHospital[hosp1] || 0) + 1;
-                            conteoPorHospital[hosp2] = (conteoPorHospital[hosp2] || 0) + 1;
-                        } else {
-                            conteoPorHospital[hosp] = (conteoPorHospital[hosp] || 0) + 1;
-                        }
-                    }
-                }
-
-                // 2. Preparamos las tarjetas internas de hospitales
                 const cuposDeEsp = cuposPorHospital[esp] || {};
+                const datosGobierno = adjudicacionesOficiales[esp] || {};
+                
                 let tarjetasAGenerar = [];
-
-                if (esPsiq) {
-                    for (const hospBase in cuposDeEsp) {
-                        tarjetasAGenerar.push({ nombre: `${hospBase} (1er Año)`, cupos: cuposDeEsp[hospBase] });
-                        tarjetasAGenerar.push({ nombre: `${hospBase} (2do Año)`, cupos: cuposDeEsp[hospBase] });
-                    }
-                } else {
-                    for (const hospBase in cuposDeEsp) {
-                        tarjetasAGenerar.push({ nombre: hospBase, cupos: cuposDeEsp[hospBase] });
-                    }
-                    // Manejo de discrepancias (hospitales cargados que no esten en el diccionario)
-                    for (const hospCargado in conteoPorHospital) {
-                        if (!cuposDeEsp[hospCargado]) {
-                            tarjetasAGenerar.push({ nombre: hospCargado, cupos: '?' });
-                        }
-                    }
+                
+                // Armamos las tarjetas cruzando tu diccionario con los datos del gobierno
+                for (const hospBase in cuposDeEsp) {
+                    tarjetasAGenerar.push({ 
+                        nombre: hospBase, 
+                        cupos: cuposDeEsp[hospBase],
+                        adjudicados: datosGobierno[hospBase] || 0
+                    });
                 }
 
                 tarjetasAGenerar.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-				// 3. Calculamos la suma total para ponerla en la cabecera del acordeon
-                // Usamos el total oficial de la provincia, evitando duplicar cupos en Psiquiatria
-                let totalCuposEsp = cuposPorEspecialidad[esp] || 0;
+                // Calculamos los totales para la cabecera del acordeon
+                let totalCuposEsp = 0;
                 let totalAdjudicadosEsp = 0;
-                
-                // Contamos a las personas fisicas unicas, ignorando cuantas tarjetas generen
-                for (const key in adjudicaciones) {
-                    if (adjudicaciones[key].especialidad === esp) {
-                        totalAdjudicadosEsp++;
-                    }
-                }
+                tarjetasAGenerar.forEach(t => {
+                    totalCuposEsp += t.cupos;
+                    totalAdjudicadosEsp += t.adjudicados;
+                });
 
-                // 4. Creamos el boton principal del acordeon
                 const btnToggle = document.createElement('button');
                 btnToggle.className = 'btn-toggle-stats';
                 btnToggle.innerHTML = `
@@ -1786,43 +1781,34 @@ if (btnAbrirTableroCupos) {
                     </div>
                 `;
                 
-                // 5. Creamos el contenedor colapsable con los hospitales
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'seccion-colapsable';
                 
                 let htmlHosp = `<div style="margin-top: 5px; margin-bottom: 15px; display:flex; flex-direction:column; gap:6px;">`;
                 
-                if (tarjetasAGenerar.length === 0) {
-                    htmlHosp += `<p style="color: #666; font-size: 0.9rem; padding: 10px;">No hay hospitales definidos.</p>`;
-                } else {
-                    tarjetasAGenerar.forEach(tarjeta => {
-                        const cuposTotal = tarjeta.cupos;
-                        const adjudicados = conteoPorHospital[tarjeta.nombre] || 0;
-                        
-                        let colorEstado = '#28a745'; // Libre (Verde)
-                        if (cuposTotal !== '?' && adjudicados >= cuposTotal) {
-                            colorEstado = '#dc3545'; // Lleno (Rojo)
-                        } else if (adjudicados > 0) {
-                            colorEstado = '#fd7e14'; // Llenandose (Naranja)
-                        }
+                tarjetasAGenerar.forEach(tarjeta => {
+                    let colorEstado = '#28a745'; // Libre
+                    if (tarjeta.adjudicados >= tarjeta.cupos) {
+                        colorEstado = '#dc3545'; // Lleno
+                    } else if (tarjeta.adjudicados > 0) {
+                        colorEstado = '#fd7e14'; // Llenandose
+                    }
 
-                        htmlHosp += `
-                            <div class="card-opcion" style="margin-bottom:0; padding:10px 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid ${colorEstado}; border-radius: 4px;">
-                                <span style="font-weight: 500; font-size: 0.9rem;">${tarjeta.nombre}</span>
-                                <span style="font-weight: bold; font-size: 0.85rem; color: ${colorEstado}; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px; white-space: nowrap;">
-                                    Elegidos: ${adjudicados} / ${cuposTotal}
-                                </span>
-                            </div>
-                        `;
-                    });
-                }
+                    htmlHosp += `
+                        <div class="card-opcion" style="margin-bottom:0; padding:10px 15px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid ${colorEstado}; border-radius: 4px;">
+                            <span style="font-weight: 500; font-size: 0.9rem;">${tarjeta.nombre}</span>
+                            <span style="font-weight: bold; font-size: 0.85rem; color: ${colorEstado}; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px; white-space: nowrap;">
+                                Elegidos: ${tarjeta.adjudicados} / ${tarjeta.cupos}
+                            </span>
+                        </div>
+                    `;
+                });
+                
                 htmlHosp += `</div>`;
                 contentDiv.innerHTML = htmlHosp;
 
-                // 6. Asignamos el evento para desplegar/plegar
                 btnToggle.addEventListener('click', () => {
                     const estaAbierto = btnToggle.classList.contains('abierta');
-                    
                     if (!estaAbierto) {
                         btnToggle.classList.add('abierta');
                         contentDiv.classList.add('abierta');
