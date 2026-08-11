@@ -1691,36 +1691,54 @@ if (btnAbrirTableroCupos) {
     btnAbrirTableroCupos.addEventListener('click', async () => {
         mostrarCarga(true);
         
-		try {
+        try {
             // Descargamos la lista que subio el scraper de Python
             const snapshot = await get(ref(db, 'adjudicaciones'));
             const adjudicacionesBrutas = snapshot.exists() ? snapshot.val() : {};
 
-            // 1. Extraemos y mostramos la hora de actualizacion
-            const elementoTexto = document.getElementById('textoActualizacion');
-            if (adjudicacionesBrutas.ultima_actualizacion) {
-                // Al pasar el UTC a new Date(), JS lo convierte automáticamente a la hora de Argentina
-                const fechaObj = new Date(adjudicacionesBrutas.ultima_actualizacion);
-                const horaLocal = fechaObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                elementoTexto.innerHTML = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span> Sincronizado con InfoSalud a las <b>${horaLocal}</b>`;
-            } else {
-                elementoTexto.innerText = "Sincronizado con InfoSalud (Hora no disponible)";
-            }
-
-            // 2. Reagrupamos la lista plana en la estructura que necesita el Tablero
+            // 1. Reagrupamos la lista plana y calculamos el TOTAL GENERAL
             const adjudicacionesOficiales = {};
+            let totalAdjudicadosGeneral = 0; // Contador general
+
             for (const key in adjudicacionesBrutas) {
                 // IMPORTANTÍSIMO: Saltamos las llaves de metadata para no romper el código
                 if (key === "ultima_actualizacion" || key === "estado") continue;
                 
                 const item = adjudicacionesBrutas[key];
                 if (item && item.especialidad && item.hospital) {
+                    
+                    // Sumamos al contador general
+                    totalAdjudicadosGeneral += item.adjudicados;
+
                     if (!adjudicacionesOficiales[item.especialidad]) {
                         adjudicacionesOficiales[item.especialidad] = {};
                     }
                     adjudicacionesOficiales[item.especialidad][item.hospital] = 
                         (adjudicacionesOficiales[item.especialidad][item.hospital] || 0) + item.adjudicados;
                 }
+            }
+
+            // 2. Extraemos y mostramos la hora junto con el nuevo contador
+            const elementoTexto = document.getElementById('textoActualizacion');
+            let textoHora = "Sincronizado con InfoSalud (Hora no disponible)";
+            
+            if (adjudicacionesBrutas.ultima_actualizacion) {
+                // Al pasar el UTC a new Date(), JS lo convierte automáticamente a la hora de Argentina
+                const fechaObj = new Date(adjudicacionesBrutas.ultima_actualizacion);
+                const horaLocal = fechaObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span> Sincronizado con InfoSalud a las <b>${horaLocal}</b>`;
+            }
+
+            // Inyectamos ambos textos en el HTML
+            if (elementoTexto) {
+                elementoTexto.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <div>${textoHora}</div>
+                        <div style="color: #6f42c1; font-weight: bold; font-size: 1rem; background-color: rgba(111, 66, 193, 0.1); padding: 5px 10px; border-radius: 6px; display: inline-block; width: fit-content; margin-top: 5px;">
+                            Total  adjudicados: ${totalAdjudicadosGeneral}
+                        </div>
+                    </div>
+                `;
             }
 
             const contenedor = document.getElementById('contenedorAcordeonesCupos');
@@ -1733,8 +1751,6 @@ if (btnAbrirTableroCupos) {
             ];
 
             let especialidades = Object.keys(cuposPorHospital).sort();
-            
-            // ... [EL RESTO DE LA FUNCIÓN SIGUE EXACTAMENTE IGUAL DESDE AQUÍ] ...
             
             especialidades = especialidades.filter(esp => {
                 const esPrimerNivel = esp.includes("(Primer nivel)") || esp.includes("(Ambos niveles)");
