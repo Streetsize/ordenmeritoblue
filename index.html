@@ -45,7 +45,7 @@
             <!-- ADJUDICACIONES EN VIVO: POSTULANTES Y VISITANTES -->
             <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
 
-                <!-- Carga de Adjudicacion (Privado) -->
+                <!-- Carga de Adjudicacion (Privado) 
                 <div class="card-opcion" style="border-left: 4px solid #28a745;">
                     <h3 style="color: #28a745; margin-bottom: 5px;">Cargar mi Adjudicacion Oficial</h3>
                     <p style="font-size: 0.9rem; color: #777; margin-bottom: 15px;">
@@ -57,7 +57,7 @@
                     </div>
                     <button id="btnValidarAdjudicacion" class="btn-primary" style="background-color: #28a745; border-color: #28a745;">Validar en Orden de Merito</button>
 
-                    <!-- Formulario oculto hasta validar DNI -->
+                    
                     <div id="formAdjudicacion" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px;">
                         <div class="form-group">
                             <label for="espAdjudicada">Especialidad adjudicada:</label>
@@ -79,7 +79,7 @@
                         <button id="btnGuardarAdjudicacion" class="btn-primary">Guardar Adjudicacion</button>
                         <div id="msgAdjudicacion" style="margin-top: 10px; font-weight: bold; display: none;"></div>
                     </div>
-                </div>
+                </div>                 -->
 
                 <!-- Visor de Adjudicaciones Publico (Modificado a Tablero) -->
                 <div class="card-opcion" style="border-left: 4px solid #6f42c1;">
@@ -115,13 +115,16 @@
         </div>
 
         <!-- PASO 4: Tablero de Cupos en Vivo (NUEVO) -->
-        <div id="paso4" style="display: none;">
+		<div id="paso4" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
                 <h3 style="color: #6f42c1; margin: 0;">Tablero de Cupos Adjudicados</h3>
                 <button id="btnCerrarTablero" class="btn-outline" style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px;">Volver al Inicio</button>
             </div>
             
-            <p style="font-size: 0.9rem; color: #777; margin-bottom: 20px;">ES POSIBLE QUE LA CANTIDAD DE CUPOS TOTALES ACA MOSTRADOS NO SEA IGUAL A LA OFICIAL - SIRVE PARA ORIENTARSE, USTED SABE MEJOR QUE YO LOS CUPOS TOTALES DE LA ESPECIALIDAD QUE DESEA</p>
+            <p id="textoActualizacion" style="font-size: 0.95rem; color: #28a745; margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                <span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                Obteniendo estado de sincronización...
+            </p>
             
             <div id="contenedorAcordeonesCupos" style="display: flex; flex-direction: column; gap: 8px;">
                 <!-- Se llena dinamicamente con JS -->
