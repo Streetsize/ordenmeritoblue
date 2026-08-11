@@ -38,10 +38,60 @@
     <div class="container">
         <h2>Ranking Residencias 2026</h2>
         
-        <!-- PASO 1: Inicio -->
+<!-- PASO 1: Inicio -->
         <div id="paso1">
             <p style="text-align: center; color: #777; margin-bottom: 2rem;">Mendoza</p>
+            
+            <!-- ADJUDICACIONES EN VIVO: POSTULANTES Y VISITANTES -->
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
 
+                <!-- Carga de Adjudicacion (Privado) -->
+                <div class="card-opcion" style="border-left: 4px solid #28a745;">
+                    <h3 style="color: #28a745; margin-bottom: 5px;">Cargar mi Adjudicacion Oficial</h3>
+                    <p style="font-size: 0.9rem; color: #777; margin-bottom: 15px;">
+                        Si ya confirmaste tu cargo, ingresa tu DNI. Tu eleccion se guardara de forma <strong>oculta</strong> (no visible en el ranking), pero el dato contabilizara para que tus colegas sepan cuantos cupos quedan disponibles.
+                    </p>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="dniAdjudicacion">Ingresa tu DNI (sin puntos):</label>
+                        <input type="text" id="dniAdjudicacion" placeholder="Ej: 38123456" pattern="[0-9]+">
+                    </div>
+                    <button id="btnValidarAdjudicacion" class="btn-primary" style="background-color: #28a745; border-color: #28a745;">Validar en Orden de Merito</button>
+
+                    <!-- Formulario oculto hasta validar DNI -->
+                    <div id="formAdjudicacion" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px;">
+                        <div class="form-group">
+                            <label for="espAdjudicada">Especialidad adjudicada:</label>
+                            <input type="text" id="espAdjudicada" list="listaEspAdj" placeholder="Escribi o desplega la lista...">
+                            <datalist id="listaEspAdj"></datalist>
+                        </div>
+                        <div class="form-group" id="grupoHospAdj1">
+                            <label id="lblHospAdj1" for="hospAdjudicado">Hospital adjudicado:</label>
+                            <select id="hospAdjudicado" disabled>
+                                <option value="">Primero selecciona la especialidad...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="grupoHospAdj2" style="display: none;">
+                            <label for="hospAdjudicado2">Hospital adjudicado (2do Año):</label>
+                            <select id="hospAdjudicado2">
+                                <option value="">Selecciona el hospital para 2do año...</option>
+                            </select>
+                        </div>
+                        <button id="btnGuardarAdjudicacion" class="btn-primary">Guardar Adjudicacion</button>
+                        <div id="msgAdjudicacion" style="margin-top: 10px; font-weight: bold; display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Visor de Adjudicaciones Publico (Modificado a Tablero) -->
+                <div class="card-opcion" style="border-left: 4px solid #6f42c1;">
+                    <h3 style="color: #6f42c1; margin-bottom: 5px;">Tablero de Cupos Adjudicados</h3>
+                    <p style="font-size: 0.9rem; color: #777; margin-bottom: 15px;">
+                        Consulta la cantidad de cargos que ya fueron elegidos por hospital, desglosado por especialidad.
+                    </p>
+                    <button id="btnAbrirTableroCupos" class="btn-primary" style="background-color: #6f42c1; border-color: #6f42c1;">Abrir Tablero General</button>
+                </div>
+            </div>
+
+            <!-- SIMULADOR Y RANKING DE EXAMEN -->
             <div class="card-opcion">
                 <h3>Soy Postulante: Simular hospital y especialidad</h3>
                 <div class="form-group" style="margin-bottom: 1rem;">
@@ -60,35 +110,23 @@
                 </div>
                 <button id="btnVerLibre" class="btn-secondary">Ir directo al Ranking</button>
             </div>
-			
-			<!-- NUEVO: AUDITOR DE PUNTAJE -->
-            <div class="card-opcion" style="border-left: 4px solid #17a2b8; margin-top: 2rem;">
-                <h3 style="color: #17a2b8; display: flex; align-items: center; gap: 8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    Estimar puesto en el ranking oficial
-                </h3>
-                <p style="font-size: 0.9rem; color: #777; margin-bottom: 15px;">
-                    ¿En que puesto del orden de merito deberia estar aproximadamente?
-                </p>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label for="dniAuditor">Ingresá tu DNI (sin puntos):</label>
-                    <input type="text" id="dniAuditor" placeholder="Ej: 38123456" pattern="[0-9]+">
-                </div>
-                <div class="form-group checkbox-group" style="margin-bottom: 1rem;">
-                    <input type="checkbox" id="checkAuditorMendoza" checked>
-                    <label for="checkAuditorMendoza" style="margin-bottom: 0; cursor: pointer;">GEOREFERENCIA (MENDOZA)</label>
-                </div>
-                <button id="btnAuditar" class="btn-primary" style="background-color: #17a2b8; border-color: #17a2b8;">Calcular</button>
-                
-                <div id="resultadoAuditor" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
-            </div>
-			
-
-  
+            
             <div style="height: 40px; width: 100%; clear: both;"></div>
-			
-</div>
+        </div>
 
+        <!-- PASO 4: Tablero de Cupos en Vivo (NUEVO) -->
+        <div id="paso4" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
+                <h3 style="color: #6f42c1; margin: 0;">Tablero de Cupos Adjudicados</h3>
+                <button id="btnCerrarTablero" class="btn-outline" style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px;">Volver al Inicio</button>
+            </div>
+            
+            <p style="font-size: 0.9rem; color: #777; margin-bottom: 20px;">ES POSIBLE QUE LA CANTIDAD DE CUPOS TOTALES ACA MOSTRADOS NO SEA IGUAL A LA OFICIAL - SIRVE PARA ORIENTARSE, USTED SABE MEJOR QUE YO LOS CUPOS TOTALES DE LA ESPECIALIDAD QUE DESEA</p>
+            
+            <div id="contenedorAcordeonesCupos" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Se llena dinamicamente con JS -->
+            </div>
+        </div>
 
 <!-- PASO 2: Confirmación de Datos -->
         <div id="paso2">
