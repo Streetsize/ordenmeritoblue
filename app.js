@@ -1047,6 +1047,7 @@ const cuposPorHospital = {
     "MEDICINA DE FAMILIA (Primer nivel)": {
         "Área Departamental de Salud de Godoy Cruz": 2,
         "Área Departamental de Salud de Maipú": 4,
+		"Facultad (UNC)": 2,
         "Hospital Carlos Saporiti": 4,
         "Hospital Domingo Sícoli": 4,
         "Hospital Enfermeros Argentinos": 3,
@@ -1163,7 +1164,7 @@ const cuposPorHospital = {
         "Hospital Pediátrico Alexander Fleming OSEP": 1
     },
     "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": {
-        "Clínica del Prado": 2,
+        "Clínica del Prado": 1,
         "Hospital Alfredo Perrupato": 1,
         "Hospital Carlos Pereyra": 5,
         "Hospital Carlos Saporiti": 3,
@@ -1201,7 +1202,7 @@ const cuposPorHospital = {
     "TOCOGINECOLOGÍA (Primer nivel)": {
         "Hospital Alfredo Perrupato": 4,
         "Hospital Diego Paroissien": 4,
-        "Hospital Español": 3,
+        "Hospital Español": 2,
         "Hospital Italiano": 2,
         "Hospital Luis Lagomaggiore": 4,
         "Hospital Obstetrico Virgen de la Misericordia OSEP": 2,
