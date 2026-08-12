@@ -1750,29 +1750,148 @@ if (btnAbrirTableroCupos) {
             const elementoTexto = document.getElementById('textoActualizacion');
             let textoHora = "Sincronizado con InfoSalud (Hora no disponible)";
             
+            // --- LÓGICA DEL CRONOGRAMA POR TRAMOS HORARIOS ---
+            const fechaActual = new Date();
+            const mesActual = fechaActual.getMonth(); // Agosto es 7
+            const diaActual = fechaActual.getDate();
+            const tiempoDecimal = fechaActual.getHours() + (fechaActual.getMinutes() / 60);
+            
+            let maximoLlamadosHoy = 0;
+            let textoCronograma = "";
+
+            // Array con cada bloque horario del cronograma oficial
+            const tramos = [
+                { dia: 11, inicio: 12.0, fin: 13.0, desde: 1, hasta: 9 },
+                { dia: 11, inicio: 13.0, fin: 14.0, desde: 10, hasta: 19 },
+                
+                { dia: 12, inicio: 8.5, fin: 9.5, desde: 20, hasta: 29 },
+                { dia: 12, inicio: 9.5, fin: 10.5, desde: 30, hasta: 39 },
+                { dia: 12, inicio: 10.5, fin: 11.5, desde: 40, hasta: 49 },
+                { dia: 12, inicio: 11.5, fin: 12.5, desde: 50, hasta: 59 },
+                { dia: 12, inicio: 12.5, fin: 13.5, desde: 60, hasta: 69 },
+                { dia: 12, inicio: 13.5, fin: 14.5, desde: 70, hasta: 79 },
+                
+                { dia: 13, inicio: 8.5, fin: 9.5, desde: 80, hasta: 89 },
+                { dia: 13, inicio: 9.5, fin: 10.5, desde: 90, hasta: 99 },
+                { dia: 13, inicio: 10.5, fin: 11.5, desde: 100, hasta: 109 },
+                { dia: 13, inicio: 11.5, fin: 12.5, desde: 110, hasta: 119 },
+                { dia: 13, inicio: 12.5, fin: 13.5, desde: 120, hasta: 129 },
+                { dia: 13, inicio: 13.5, fin: 14.5, desde: 130, hasta: 139 },
+                
+                { dia: 14, inicio: 8.5, fin: 9.5, desde: 140, hasta: 149 },
+                { dia: 14, inicio: 9.5, fin: 10.5, desde: 150, hasta: 159 },
+                { dia: 14, inicio: 10.5, fin: 11.5, desde: 160, hasta: 169 },
+                { dia: 14, inicio: 11.5, fin: 12.5, desde: 170, hasta: 179 },
+                { dia: 14, inicio: 12.5, fin: 13.5, desde: 180, hasta: 189 },
+                { dia: 14, inicio: 13.5, fin: 14.5, desde: 190, hasta: 199 },
+                
+                { dia: 18, inicio: 8.5, fin: 9.5, desde: 200, hasta: 209 },
+                { dia: 18, inicio: 9.5, fin: 10.5, desde: 210, hasta: 219 },
+                { dia: 18, inicio: 10.5, fin: 11.5, desde: 220, hasta: 229 },
+                { dia: 18, inicio: 11.5, fin: 12.5, desde: 230, hasta: 239 },
+                { dia: 18, inicio: 12.5, fin: 13.5, desde: 240, hasta: 250 },
+                
+                { dia: 19, inicio: 8.5, fin: 9.5, desde: 251, hasta: 270 },
+                { dia: 19, inicio: 9.5, fin: 10.5, desde: 271, hasta: 290 },
+                { dia: 19, inicio: 10.5, fin: 11.5, desde: 291, hasta: 310 },
+                { dia: 19, inicio: 11.5, fin: 12.5, desde: 311, hasta: 330 },
+                { dia: 19, inicio: 12.5, fin: 13.5, desde: 331, hasta: 350 },
+                { dia: 19, inicio: 13.5, fin: 14.5, desde: 351, hasta: 370 },
+                
+                { dia: 20, inicio: 8.5, fin: 9.5, desde: 371, hasta: 400 },
+                { dia: 20, inicio: 9.5, fin: 10.5, desde: 401, hasta: 430 },
+                { dia: 20, inicio: 10.5, fin: 11.5, desde: 431, hasta: 450 },
+                { dia: 20, inicio: 11.5, fin: 12.5, desde: 451, hasta: 470 },
+                { dia: 20, inicio: 12.5, fin: 13.5, desde: 471, hasta: 490 },
+                { dia: 20, inicio: 13.5, fin: 14.5, desde: 491, hasta: 511 }
+            ];
+
+            if (mesActual === 7) {
+                const tramosHoy = tramos.filter(t => t.dia === diaActual);
+
+                if (diaActual < 11) {
+                    textoCronograma = "Las adjudicaciones comienzan el 11 de agosto.";
+                } else if (diaActual > 14 && diaActual < 18) {
+                    maximoLlamadosHoy = 199;
+                    textoCronograma = "Sin adjudicaciones programadas por el fin de semana largo.";
+                } else if (diaActual > 20) {
+                    maximoLlamadosHoy = 511;
+                    textoCronograma = "El proceso de adjudicación ha finalizado.";
+                } else if (tramosHoy.length > 0) {
+                    // Buscar en qué tramo horario estamos hoy
+                    let tramoActivo = null;
+                    let tramoPasado = null;
+
+                    for (const tramo of tramosHoy) {
+                        if (tiempoDecimal >= tramo.inicio && tiempoDecimal < tramo.fin) {
+                            tramoActivo = tramo;
+                        } else if (tiempoDecimal >= tramo.fin) {
+                            tramoPasado = tramo;
+                        }
+                    }
+
+                    if (tiempoDecimal < tramosHoy[0].inicio) {
+                        // Es temprano a la mañana (antes de que empiece la jornada de hoy)
+                        // Calculamos el tope del día anterior
+                        const diaAnterior = tramos.filter(t => t.dia < diaActual);
+                        maximoLlamadosHoy = diaAnterior.length > 0 ? diaAnterior[diaAnterior.length - 1].hasta : 0;
+                        const horaInicioFormateada = tramosHoy[0].inicio === 8.5 ? "08:30" : "12:00";
+                        textoCronograma = `La jornada comienza a las ${horaInicioFormateada}hs. (Llamados hasta ayer: #${maximoLlamadosHoy})`;
+                    } else if (tramoActivo) {
+                        // Estamos en pleno turno
+                        maximoLlamadosHoy = tramoActivo.hasta;
+                        textoCronograma = `Actualmente adjudicando el bloque de las ${Math.floor(tramoActivo.inicio)}:${tramoActivo.inicio % 1 !== 0 ? '30' : '00'} (Puestos ${tramoActivo.desde} al ${tramoActivo.hasta}).`;
+                    } else if (tramoPasado) {
+                        // Ya pasó el último turno del día
+                        maximoLlamadosHoy = tramosHoy[tramosHoy.length - 1].hasta;
+                        textoCronograma = `Turno finalizado por hoy. Llamaron hasta el puesto #${maximoLlamadosHoy}.`;
+                    }
+                }
+            } else if (mesActual > 7) {
+                maximoLlamadosHoy = 511;
+                textoCronograma = "El proceso de adjudicación ha finalizado.";
+            }
+
+            // Calculamos cuántos renunciaron/pasaron (Llamados habilitados menos los que efectivamente eligieron)
+            let ausentesORenuncias = 0;
+            if (maximoLlamadosHoy > 0) {
+                 ausentesORenuncias = maximoLlamadosHoy - totalAdjudicadosGeneral;
+                 if(ausentesORenuncias < 0) ausentesORenuncias = 0; // Por si hay algún desfase o error de InfoSalud
+            }
+
+            // Inyectamos la hora y verificamos si es horario nocturno
             if (adjudicacionesBrutas.ultima_actualizacion) {
                 const fechaObj = new Date(adjudicacionesBrutas.ultima_actualizacion);
                 const horaLocal = fechaObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const horaActualNumerica = fechaActual.getHours();
                 
-                // --- LÓGICA DE AVISO: FUERA DE HORARIO (18hs a 8am) ---
-                const horaActual = new Date().getHours();
-                
-                if (horaActual >= 18 || horaActual < 8) {
-                    // Mensaje nocturno (Puntito gris estático)
-                    textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #6c757d; border-radius: 50%;"></span> <span style="color: #555;"><b>Jornada finalizada:</b> Ya no hay cambios por hoy. (Última vez: ${horaLocal})</span>`;
+                if (horaActualNumerica >= 18 || horaActualNumerica < 8) {
+                    textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #6c757d; border-radius: 50%;"></span> <span style="color: #555;"><b>Fuera de servicio:</b> Ya no hay cambios oficiales por hoy. (Última vez: ${horaLocal})</span>`;
                 } else {
-                    // Mensaje diurno activo (Puntito verde titilando)
                     textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span> Sincronizado con InfoSalud a las <b>${horaLocal}</b>`;
                 }
             }
 
-            // Inyectamos ambos textos en el HTML (ESTA ERA LA PARTE QUE FALTABA)
+            // Inyectamos todo en el HTML
             if (elementoTexto) {
                 elementoTexto.innerHTML = `
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px;">
                         <div>${textoHora}</div>
-                        <div style="color: #6f42c1; font-weight: bold; font-size: 1rem; background-color: rgba(111, 66, 193, 0.1); padding: 5px 10px; border-radius: 4px; display: inline-block; width: fit-content; margin-top: 5px;">
-                            Total adjudicados: ${totalAdjudicadosGeneral}
+                        
+                        <div style="background: rgba(0,0,0,0.03); border: 1px solid #ccc; padding: 10px 15px; border-radius: 4px;">
+                            <div style="font-weight: 500; font-size: 0.95rem; color: #333; margin-bottom: 5px;">
+                                📅 ${textoCronograma}
+                            </div>
+                            
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                <span style="color: #6f42c1; font-weight: bold; font-size: 0.95rem; background-color: rgba(111, 66, 193, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                                    Total adjudicados: ${totalAdjudicadosGeneral}
+                                </span>
+                                
+                                <span style="color: #dc3545; font-weight: bold; font-size: 0.95rem; background-color: rgba(220, 53, 69, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block;" title="Ausencias, renuncias o puestos que quedaron vacantes hasta el momento">
+                                    Ausentes: ${ausentesORenuncias}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 `;
