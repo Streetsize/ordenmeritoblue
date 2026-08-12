@@ -424,6 +424,22 @@ body.dark-mode #cajaResumenFoto h3 {
 body.dark-mode #cajaResumenFoto div {
     color: #ccc !important;
 }
+
+/* EFECTO TÁCTIL PARA LA TARJETA DE PSIQUIATRÍA */
+#btnAbrirPsiquiatria {
+    cursor: pointer; /* Cambia el cursor a la manito */
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+#btnAbrirPsiquiatria:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(232, 62, 140, 0.15); /* Sombra rosada sutil */
+}
+
+#btnAbrirPsiquiatria:active {
+    transform: translateY(1px) scale(0.98); /* Efecto de hundimiento rápido */
+    box-shadow: 0 2px 5px rgba(232, 62, 140, 0.2);
+}
 /* ==========================================
            ESTILOS DEL MODAL PEAJE
            ========================================== */
@@ -494,3 +510,5 @@ body.dark-mode #cajaResumenFoto div {
         .input-peaje {
             -moz-appearance: textfield; /* Soporte para Firefox */
         }
+
+
