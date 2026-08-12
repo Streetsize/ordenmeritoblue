@@ -1844,7 +1844,7 @@ if (btnAbrirTableroCupos) {
                     } else if (tramoPasado) {
                         // Ya pasó el último turno del día
                         maximoLlamadosHoy = tramosHoy[tramosHoy.length - 1].hasta;
-                        textoCronograma = `Turno finalizado por hoy. Llamaron hasta el puesto #${maximoLlamadosHoy}.`;
+                        textoCronograma = `Llamaron hasta el puesto #${maximoLlamadosHoy}.`;
                     }
                 }
             } else if (mesActual > 7) {
@@ -1866,7 +1866,7 @@ if (btnAbrirTableroCupos) {
                 const horaActualNumerica = fechaActual.getHours();
                 
                 if (horaActualNumerica >= 18 || horaActualNumerica < 8) {
-                    textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #6c757d; border-radius: 50%;"></span> <span style="color: #555;"><b>Fuera de servicio:</b> Ya no hay cambios oficiales por hoy. (Última vez: ${horaLocal})</span>`;
+                    textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #6c757d; border-radius: 50%;"></span> <span style="color: #555;">Ya no hay cambios oficiales por hoy. (Última vez: ${horaLocal})</span>`;
                 } else {
                     textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span> Sincronizado con InfoSalud a las <b>${horaLocal}</b>`;
                 }
@@ -1880,7 +1880,7 @@ if (btnAbrirTableroCupos) {
                         
                         <div style="background: rgba(0,0,0,0.03); border: 1px solid #ccc; padding: 10px 15px; border-radius: 4px;">
                             <div style="font-weight: 500; font-size: 0.95rem; color: #333; margin-bottom: 5px;">
-                                📅 ${textoCronograma}
+                                 ${textoCronograma}
                             </div>
                             
                             <div style="display: flex; flex-wrap: wrap; gap: 10px;">
