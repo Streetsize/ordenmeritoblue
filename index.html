@@ -90,6 +90,16 @@
                     <button id="btnAbrirTableroCupos" class="btn-primary" style="background-color: #6f42c1; border-color: #6f42c1;">Abrir Tablero General</button>
                 </div>
             </div>
+			
+			<div class="card-opcion" id="btnAbrirPsiquiatria" style="margin-top: 15px; border-left: 4px solid #e83e8c;">
+					<div style="display: flex; align-items: center; gap: 15px;">
+						<div style="font-size: 2rem;">🧠</div>
+						<div>
+							<h3 style="margin: 0; color: #e83e8c;"> Psiquiatría</h3>
+							<p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #555;">Click para ver y cargar sedes (1° y 2° año)</p>
+						</div>
+					</div>
+				</div>
 
             <!-- SIMULADOR Y RANKING DE EXAMEN -->
             <div class="card-opcion">
@@ -196,7 +206,81 @@
         <!-- Mensajes de Sistema -->
         <div id="loading" class="loader">Conectando con la base de datos...</div>
         <div id="errorBox" class="error"></div>
+		
+			<div id="pasoPsiquiatria" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
+        <h3 style="margin: 0; color: #0056b3;">Psiquiatría</h3>
+        <button id="btnCerrarPsiquiatria" class="btn-outline" style="width: auto; margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 20px;">Volver al Inicio</button>
     </div>
+
+    <p style="font-size: 0.9rem; color: #555; margin-bottom: 20px;">
+        Si adjudicaste en psiquiatria ayuda a tus compañeros especificando tu elección de 1er y 2do año. (No se mostrara tu DNI, solamente se almacena para saber la cantidad de cupos disponibles)
+    </p>
+
+<!-- Formulario de carga manual (Usando card-opcion) -->
+    <div class="card-opcion" style="border-left: 4px solid #e83e8c;">
+        <h3 style="margin-top: 0; margin-bottom: 15px;">Registrar mi elección</h3>
+        
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label for="dniPsiq">Tu DNI (No se mostrara publicamente):</label>
+            <input type="number" id="dniPsiq" placeholder="Ej: 38123456" required>
+            <button id="btnValidarPsiq" class="btn-primary" style="margin-top: 10px; background-color: #6c757d; border-color: #6c757d;">Validar DNI en Padrón</button>
+        </div>
+        
+<!-- CONTENEDOR OCULTO: Solo aparece si el DNI es correcto y es su turno -->
+        <div id="grupoSedesPsiq" style="display: none; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px;">
+            <div class="form-group">
+                <label for="sede1Psiq">Seleccionar Sede para el 1er Año:</label>
+                <select id="sede1Psiq" required>
+                    <option value="">Desplegá la lista...</option>
+                    <option value="Clínica del Prado">Clínica del Prado</option>
+                    <option value="Hospital Alfredo Perrupato">Hospital Alfredo Perrupato</option>
+                    <option value="Hospital Carlos Pereyra">Hospital Carlos Pereyra</option>
+                    <option value="Hospital Carlos Saporiti">Hospital Carlos Saporiti</option>
+                    <option value="Hospital Central">Hospital Central</option>
+                    <option value="Hospital El Sauce">Hospital El Sauce</option>
+                    <option value="Hospital Luis Lagomaggiore">Hospital Luis Lagomaggiore</option>
+                    <option value="Hospital Nuestra Señora del Carmen OSEP">Hospital Ntra. Sra. del Carmen OSEP</option>
+                    <option value="Hospital Teodoro Schestakow">Hospital Teodoro Schestakow</option>
+                    <option value="Hospital Victorino Tagarelli">Hospital Victorino Tagarelli</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="sede2Psiq">Seleccionar Sede para el 2do Año:</label>
+                <select id="sede2Psiq" required>
+                    <option value="">Desplegá la lista...</option>
+                    <option value="Clínica del Prado">Clínica del Prado</option>
+                    <option value="Hospital Alfredo Perrupato">Hospital Alfredo Perrupato</option>
+                    <option value="Hospital Carlos Pereyra">Hospital Carlos Pereyra</option>
+                    <option value="Hospital Carlos Saporiti">Hospital Carlos Saporiti</option>
+                    <option value="Hospital Central">Hospital Central</option>
+                    <option value="Hospital El Sauce">Hospital El Sauce</option>
+                    <option value="Hospital Luis Lagomaggiore">Hospital Luis Lagomaggiore</option>
+                    <option value="Hospital Nuestra Señora del Carmen OSEP">Hospital Ntra. Sra. del Carmen OSEP</option>
+                    <option value="Hospital Teodoro Schestakow">Hospital Teodoro Schestakow</option>
+                    <option value="Hospital Victorino Tagarelli">Hospital Victorino Tagarelli</option>
+                </select>
+            </div>
+            
+            <button id="btnGuardarPsiq" class="btn-primary" style="background-color: #e83e8c; border-color: #e83e8c;">Confirmar Sedes</button>
+        </div>
+        
+        <p id="msgPsiq" style="font-size: 0.85rem; margin-top: 15px; margin-bottom: 0; font-weight: bold;"></p>
+    </div>
+
+    <!-- Tablero de resultados (Usando card-opcion) -->
+    <div class="card-opcion">
+        <h3 style="margin-top: 0; margin-bottom: 15px;">Sedes articuladas registradas</h3>
+        <div id="listaPsiquiatria">
+            <!-- Se llena con JS -->
+        </div>
+    </div>
+</div>
+		
+		
+    </div>
+	
 
     <!-- APARTADO DE COMENTARIOS / SUGERENCIAS -->
     <div id="comentar" class="card-opcion caja-comentarios" style="margin-top: 30px; padding: 1.5rem;">
@@ -232,6 +316,8 @@
     <div class="disclaimer">
         ⚠️ Esta es una herramienta colaborativa, estimativa y <strong>no oficial</strong>. Los resultados oficiales de adjudicación dependerán exclusivamente del Ministerio de Salud. Si creés que tus datos precargados son incorrectos, completalos manualmente. <strong>contacto:</strong>dromeroanglat@gmail.com / 2612140463 / @romeroo.diego
     </div>
+	
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <script src="datos_originales.js"></script>
