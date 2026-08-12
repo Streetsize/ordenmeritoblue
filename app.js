@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, child, update, push, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, child, update, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCG0-P03xXHk0_LwZ-JRkulyDhvio0NpZ8",
@@ -1849,5 +1849,235 @@ if (btnAbrirTableroCupos) {
         }
         
         mostrarCarga(false);
+    });
+}
+
+// ==========================================
+// MODULO MANUAL DE PSIQUIATRÍA
+// ==========================================
+const btnAbrirPsiquiatria = document.getElementById('btnAbrirPsiquiatria');
+const btnCerrarPsiquiatria = document.getElementById('btnCerrarPsiquiatria');
+const pasoPsiquiatria = document.getElementById('pasoPsiquiatria');
+
+if(btnAbrirPsiquiatria) {
+    btnAbrirPsiquiatria.addEventListener('click', () => {
+        document.getElementById('paso1').style.display = 'none';
+        pasoPsiquiatria.style.display = 'block';
+        cargarTableroPsiquiatria(); 
+    });
+}
+
+if(btnCerrarPsiquiatria) {
+    btnCerrarPsiquiatria.addEventListener('click', () => {
+        pasoPsiquiatria.style.display = 'none';
+        document.getElementById('paso1').style.display = 'block';
+        
+        // Al salir, reseteamos el formulario por seguridad
+        document.getElementById('grupoSedesPsiq').style.display = 'none';
+        document.getElementById('dniPsiq').disabled = false;
+        document.getElementById('dniPsiq').value = '';
+        document.getElementById('btnValidarPsiq').style.display = 'block';
+        document.getElementById('msgPsiq').textContent = '';
+        postulanteConfirmadoPsiq = null;
+    });
+}
+
+// Variable para recordar quién pasó la validación
+let postulanteConfirmadoPsiq = null; 
+
+// --- PASO 1: VALIDAR DNI Y FECHA ---
+const btnValidarPsiq = document.getElementById('btnValidarPsiq');
+if (btnValidarPsiq) {
+    btnValidarPsiq.addEventListener('click', () => {
+        const dni = document.getElementById('dniPsiq').value.trim();
+        const msg = document.getElementById('msgPsiq');
+        msg.textContent = ''; 
+        
+        if (!dni) {
+            msg.style.color = '#dc3545';
+            msg.textContent = 'Por favor, ingresá tu DNI.';
+            return;
+        }
+
+        // Validamos contra la base oficial
+        if (!ordenOficialData || Object.keys(ordenOficialData).length === 0) {
+            msg.style.color = '#dc3545';
+            msg.textContent = 'Aún no se conectó con el padrón oficial. Intentá en unos segundos.';
+            return;
+        }
+
+        const postulanteOficial = ordenOficialData[dni];
+        if (!postulanteOficial) {
+            msg.style.color = '#dc3545';
+            msg.textContent = 'Tu DNI no figura en el Orden de Mérito oficial.';
+            return;
+        }
+
+        const puestoGlobal = parseInt(postulanteOficial.orden);
+        
+        // --- LÓGICA DEL CRONOGRAMA ---
+        const fechaActual = new Date();
+        const mesActual = fechaActual.getMonth(); // En JS, Agosto es 7, Septiembre es 8.
+        const diaActual = fechaActual.getDate();
+        
+        let limiteOrden = 0;
+        
+        if (mesActual === 7) { // Estamos en Agosto
+            if (diaActual < 12) limiteOrden = 0; 
+            else if (diaActual === 12) limiteOrden = 79;
+            else if (diaActual === 13) limiteOrden = 139;
+            else if (diaActual === 14) limiteOrden = 199;
+            else limiteOrden = 9999; // A partir del 15, todos
+        } else if (mesActual > 7) {
+            limiteOrden = 9999; // Resto del año, todos
+        }
+
+        if (puestoGlobal > limiteOrden) {
+            msg.style.color = '#dc3545';
+            if (limiteOrden === 0) {
+                msg.textContent = `Tu puesto es #${puestoGlobal}. Las adjudicaciones comienzan recién el 12 de agosto.`;
+            } else {
+                msg.textContent = `Tu puesto es #${puestoGlobal}. Hoy solo están habilitados para elegir hasta el puesto #${limiteOrden}.`;
+            }
+            return;
+        }
+
+        // Si pasó los controles, lo autorizamos
+        postulanteConfirmadoPsiq = {
+            dni: dni,
+            orden: puestoGlobal
+        };
+        
+        msg.style.color = '#28a745';
+        msg.textContent = `¡DNI Autorizado! Estás en el Puesto #${puestoGlobal}. Ya podés elegir tus sedes abajo.`;
+        
+        // Bloqueamos el DNI y abrimos las compuertas
+        document.getElementById('dniPsiq').disabled = true;
+        btnValidarPsiq.style.display = 'none';
+        document.getElementById('grupoSedesPsiq').style.display = 'block';
+    });
+}
+
+// --- PASO 2: GUARDAR LAS SEDES ---
+const btnGuardarPsiq = document.getElementById('btnGuardarPsiq');
+if (btnGuardarPsiq) {
+    btnGuardarPsiq.addEventListener('click', async () => {
+        const sede1 = document.getElementById('sede1Psiq').value;
+        const sede2 = document.getElementById('sede2Psiq').value;
+        const msg = document.getElementById('msgPsiq');
+
+        if(!sede1 || !sede2) {
+            msg.style.color = '#dc3545';
+            msg.textContent = 'Por favor, elegí ambas sedes antes de confirmar.';
+            return;
+        }
+
+        if(!postulanteConfirmadoPsiq) {
+            msg.style.color = '#dc3545';
+            msg.textContent = 'Tu DNI no fue validado correctamente.';
+            return;
+        }
+
+        mostrarCarga(true);
+        try {
+            // Buscamos si existe en registrosBD para anonimizar manteniendo el formato "***123"
+            let nombreVisible = "Médico DNI ***" + postulanteConfirmadoPsiq.dni.slice(-3);
+            
+            await set(ref(db, `psiquiatria_manual/${postulanteConfirmadoPsiq.dni}`), {
+                nombre: nombreVisible,
+                orden: postulanteConfirmadoPsiq.orden,
+                sede1: sede1,
+                sede2: sede2,
+                timestamp: Date.now()
+            });
+            
+            msg.style.color = '#28a745';
+            msg.textContent = '¡Tus sedes fueron guardadas con éxito y publicadas en el tablero!';
+            
+            // Reiniciamos el formulario por si quiere cargar a un amigo
+            document.getElementById('dniPsiq').value = '';
+            document.getElementById('dniPsiq').disabled = false;
+            document.getElementById('sede1Psiq').value = '';
+            document.getElementById('sede2Psiq').value = '';
+            document.getElementById('grupoSedesPsiq').style.display = 'none';
+            document.getElementById('btnValidarPsiq').style.display = 'block';
+            postulanteConfirmadoPsiq = null;
+            
+        } catch(error) {
+            msg.style.color = '#dc3545';
+            msg.textContent = 'Error de conexión: ' + error.message;
+        }
+        mostrarCarga(false);
+    });
+}
+
+// Función para escuchar y dibujar el mapa de vacantes en tiempo real
+function cargarTableroPsiquiatria() {
+    const refPsiq = ref(db, 'psiquiatria_manual');
+    onValue(refPsiq, (snapshot) => {
+        const contenedor = document.getElementById('listaPsiquiatria');
+        contenedor.innerHTML = '';
+        
+        // Obtenemos los cupos máximos oficiales de tu diccionario
+        const cuposOficiales = cuposPorHospital["PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)"] || {};
+        
+        // Preparamos un contador en cero para cada hospital
+        const contadores = {};
+        for (const hosp in cuposOficiales) {
+            contadores[hosp] = { anio1: 0, anio2: 0, total: cuposOficiales[hosp] };
+        }
+
+        // Si hay datos cargados en Firebase, sumamos las elecciones
+        if (snapshot.exists()) {
+            const datos = snapshot.val();
+            Object.values(datos).forEach(item => {
+                // Si la sede existe en nuestro diccionario, le sumamos 1 ocupante
+                if (item.sede1 && contadores[item.sede1]) contadores[item.sede1].anio1++;
+                if (item.sede2 && contadores[item.sede2]) contadores[item.sede2].anio2++;
+            });
+        }
+
+        // Armamos las tarjetas visuales (¡Ahora se dibujan SIEMPRE!)
+        let htmlTablero = `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+        
+        // Ordenamos alfabéticamente para que sea fácil de buscar
+        const hospitalesOrdenados = Object.keys(contadores).sort();
+
+        if (hospitalesOrdenados.length === 0) {
+            htmlTablero += `<p style="color: #777; font-style: italic;">No se encontraron hospitales configurados para Psiquiatría.</p>`;
+        } else {
+            hospitalesOrdenados.forEach(hosp => {
+                const data = contadores[hosp];
+                
+                // Lógica de colores (Verde = Libre, Naranja = Llenándose, Rojo = Agotado)
+                const color1 = data.anio1 >= data.total ? '#dc3545' : (data.anio1 > 0 ? '#fd7e14' : '#28a745');
+                const color2 = data.anio2 >= data.total ? '#dc3545' : (data.anio2 > 0 ? '#fd7e14' : '#28a745');
+
+                htmlTablero += `
+                    <div class="card-opcion" style="margin-bottom: 0; padding: 15px;">
+                        <h4 style="margin: 0 0 12px 0; color: #333; font-size: 1.05rem;"> ${hosp}</h4>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.03); padding: 8px 12px; border-radius: 4px; border-left: 3px solid ${color1};">
+                                <span style="font-size: 0.9rem; font-weight: 500;">Cupos 1er Año</span>
+                                <span style="font-weight: bold; color: ${color1}; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px; font-size: 0.9rem;">
+                                    ${data.anio1} / ${data.total}
+                                </span>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.03); padding: 8px 12px; border-radius: 4px; border-left: 3px solid ${color2};">
+                                <span style="font-size: 0.9rem; font-weight: 500;">Cupos 2do Año</span>
+                                <span style="font-weight: bold; color: ${color2}; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px; font-size: 0.9rem;">
+                                    ${data.anio2} / ${data.total}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        htmlTablero += `</div>`;
+        contenedor.innerHTML = htmlTablero;
     });
 }
