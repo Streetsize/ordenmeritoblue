@@ -1707,36 +1707,72 @@ if (btnAbrirTableroCupos) {
                 
                 const item = adjudicacionesBrutas[key];
                 if (item && item.especialidad && item.hospital) {
-                    
-                    // Sumamos al contador general
-                    totalAdjudicadosGeneral += item.adjudicados;
-
                     if (!adjudicacionesOficiales[item.especialidad]) {
                         adjudicacionesOficiales[item.especialidad] = {};
                     }
                     adjudicacionesOficiales[item.especialidad][item.hospital] = 
                         (adjudicacionesOficiales[item.especialidad][item.hospital] || 0) + item.adjudicados;
+                    
+                    // Sumamos al contador general por ahora
+                    totalAdjudicadosGeneral += item.adjudicados;
                 }
             }
 
-            // 2. Extraemos y mostramos la hora junto con el nuevo contador
+            // ========================================================
+            // 🛠️ PARCHES MANUALES PARA ERRORES DE INFOSALUD
+            // ========================================================
+            // Acá podés forzar la cantidad real de adjudicados.
+            // Escribí la Especialidad y el Hospital EXACTAMENTE como salen en el tablero.
+            const correccionesManuales = {
+                "ANESTESIOLOGÍA (Primer nivel)": {
+                    "Hospital Central": 4 // Poné acá el número REAL de ocupados
+                }
+            };
+
+            // Aplicamos los parches silenciosamente
+            for (const espParche in correccionesManuales) {
+                if (!adjudicacionesOficiales[espParche]) adjudicacionesOficiales[espParche] = {};
+                
+                for (const hospParche in correccionesManuales[espParche]) {
+                    const cantidadCorrecta = correccionesManuales[espParche][hospParche];
+                    const cantidadAnteriorInfoSalud = adjudicacionesOficiales[espParche][hospParche] || 0;
+                    
+                    // Ajustamos el total general para que la suma no de mal
+                    totalAdjudicadosGeneral += (cantidadCorrecta - cantidadAnteriorInfoSalud);
+                    
+                    // Pisamos el dato malo del gobierno con el tuyo
+                    adjudicacionesOficiales[espParche][hospParche] = cantidadCorrecta;
+                }
+            }
+            // ========================================================
+
+// 2. Extraemos y mostramos la hora junto con el nuevo contador
             const elementoTexto = document.getElementById('textoActualizacion');
             let textoHora = "Sincronizado con InfoSalud (Hora no disponible)";
             
             if (adjudicacionesBrutas.ultima_actualizacion) {
-                // Al pasar el UTC a new Date(), JS lo convierte automáticamente a la hora de Argentina
                 const fechaObj = new Date(adjudicacionesBrutas.ultima_actualizacion);
                 const horaLocal = fechaObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span> Sincronizado con InfoSalud a las <b>${horaLocal}</b>`;
+                
+                // --- LÓGICA DE AVISO: FUERA DE HORARIO (18hs a 8am) ---
+                const horaActual = new Date().getHours();
+                
+                if (horaActual >= 18 || horaActual < 8) {
+                    // Mensaje nocturno (Puntito gris estático)
+                    textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #6c757d; border-radius: 50%;"></span> <span style="color: #555;"><b>Jornada finalizada:</b> Ya no hay cambios por hoy. (Última vez: ${horaLocal})</span>`;
+                } else {
+                    // Mensaje diurno activo (Puntito verde titilando)
+                    textoHora = `<span style="display: inline-block; width: 8px; height: 8px; background-color: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></span> Sincronizado con InfoSalud a las <b>${horaLocal}</b>`;
+                }
             }
 
-            // Inyectamos ambos textos en el HTML
+            // Inyectamos ambos textos en el HTML (ESTA ERA LA PARTE QUE FALTABA)
             if (elementoTexto) {
                 elementoTexto.innerHTML = `
                     <div style="display: flex; flex-direction: column; gap: 6px;">
                         <div>${textoHora}</div>
-                        <div style="color: #6f42c1; font-weight: bold; font-size: 1rem; background-color: rgba(111, 66, 193, 0.1); padding: 5px 10px; border-radius: 6px; display: inline-block; width: fit-content; margin-top: 5px;">
-                            Total  adjudicados: ${totalAdjudicadosGeneral}
+                        <div style="color: #6f42c1; font-weight: bold; font-size: 1rem; background-color: rgba(111, 66, 193, 0.1); padding: 5px 10px; border-radius: 4px; display: inline-block; width: fit-content; margin-top: 5px;">
+                            Total adjudicados: ${totalAdjudicadosGeneral}
                         </div>
                     </div>
                 `;
