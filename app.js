@@ -1730,6 +1730,10 @@ if (btnAbrirTableroCupos) {
 				    "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": {
                     "Clínica del Prado": 1 // Poné acá el número REAL de ocupados
                 }
+					"CIRUGÍA CARDIOVASCULAR (Primer nivel)": {
+                    "Hospital Central": 1 // Poné acá el número REAL de ocupados
+					"Hospital Italiano": 1 // Poné acá el número REAL de ocupados
+                }
             };
 
             // Aplicamos los parches silenciosamente
