@@ -1726,14 +1726,18 @@ if (btnAbrirTableroCupos) {
 			const correccionesManuales = {
                 "ANESTESIOLOGÍA (Primer nivel)": {
                     "Hospital Central": 4 
-                }, // <-- FALTABA ESTA COMA
+                }, 
                 "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": {
                     "Clínica del Prado": 1 
-                }, // <-- FALTABA ESTA COMA
+                }, 
                 "CIRUGÍA CARDIOVASCULAR (Primer nivel)": {
-                    "Hospital Central": 1, // <-- FALTABA ESTA COMA
+                    "Hospital Central": 1, 
                     "Hospital Italiano": 1 
                 }
+				"MEDICINA DE FAMILIA (Primer Nivel)": {
+                    "Facultad (UNC)": 2
+                },
+				
             };
 
             // Aplicamos los parches silenciosamente
