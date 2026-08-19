@@ -1723,16 +1723,16 @@ if (btnAbrirTableroCupos) {
             // ========================================================
             // Acá podés forzar la cantidad real de adjudicados.
             // Escribí la Especialidad y el Hospital EXACTAMENTE como salen en el tablero.
-            const correccionesManuales = {
+			const correccionesManuales = {
                 "ANESTESIOLOGÍA (Primer nivel)": {
-                    "Hospital Central": 4 // Poné acá el número REAL de ocupados
-                }
-				    "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": {
-                    "Clínica del Prado": 1 // Poné acá el número REAL de ocupados
-                }
-					"CIRUGÍA CARDIOVASCULAR (Primer nivel)": {
-                    "Hospital Central": 1 // Poné acá el número REAL de ocupados
-					"Hospital Italiano": 1 // Poné acá el número REAL de ocupados
+                    "Hospital Central": 4 
+                }, // <-- FALTABA ESTA COMA
+                "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": {
+                    "Clínica del Prado": 1 
+                }, // <-- FALTABA ESTA COMA
+                "CIRUGÍA CARDIOVASCULAR (Primer nivel)": {
+                    "Hospital Central": 1, // <-- FALTABA ESTA COMA
+                    "Hospital Italiano": 1 
                 }
             };
 
