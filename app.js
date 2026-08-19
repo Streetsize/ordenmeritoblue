@@ -1727,6 +1727,9 @@ if (btnAbrirTableroCupos) {
                 "ANESTESIOLOGÍA (Primer nivel)": {
                     "Hospital Central": 4 // Poné acá el número REAL de ocupados
                 }
+				    "PSIQUIATRÍA CLÍNICA INTERDISCIPLINARIA EN SALUD MENTAL (Primer nivel)": {
+                    "Clínica del Prado": 1 // Poné acá el número REAL de ocupados
+                }
             };
 
             // Aplicamos los parches silenciosamente
