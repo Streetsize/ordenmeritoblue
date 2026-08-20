@@ -1733,7 +1733,7 @@ if (btnAbrirTableroCupos) {
                 "CIRUGÍA CARDIOVASCULAR (Primer nivel)": {
                     "Hospital Central": 1, 
                     "Hospital Italiano": 1 
-                }
+                },
 				"MEDICINA DE FAMILIA (Primer Nivel)": {
                     "Facultad (UNC)": 2
                 },
