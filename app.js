@@ -1734,7 +1734,7 @@ if (btnAbrirTableroCupos) {
                     "Hospital Central": 1, 
                     "Hospital Italiano": 1 
                 },
-				"MEDICINA DE FAMILIA (Primer Nivel)": {
+				"MEDICINA DE FAMILIA (Primer nivel)": {
                     "Facultad (UNC)": 2
                 },
 				
